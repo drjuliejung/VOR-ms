@@ -389,6 +389,7 @@ LRT_STAT <- function(n, x, s){
 ###################################################################################################################################################################################################################################################################################
 
 #libraries
+library(xlsx)
 library(clinfun)
 library(car)
 library(ggplot2)
@@ -431,8 +432,15 @@ cor.test(Daily.df$Stage, Daily.df$Average, method="pearson")
 hist(Daily.df$Average) #normal enough to use an ANOVA
 mod1 <- aov(Average ~ Age, data=Daily.df)
 mod2 <- aov(Average ~ Stage, data=Daily.df)
-mod3 <- aov(Average ~ Clutch, data=Daily.df)
+mod3 <- aov(Average ~ Age + Stage, data=Daily.df)
+mod4 <- aov(Average ~ Age + Stage + Clutch, data=Daily.df)
+mod5 <- aov(Average ~ Age + Stage + Clutch + Age * Clutch, data=Daily.df)
+mod6 <- aov(Average ~ Stage + Clutch, data=Daily.df)
 
+models<-list(mod1, mod2, mod3, mod4, mod5, mod6)
+aictab(models)
+
+Anova(glm4)
 #library(car)
 Anova(mod1)
 Anova(mod2)
@@ -505,26 +513,26 @@ col = rainbow(14)
 
 # SAME DATA AS BOXPLOT
 
-ggplot(Daily.df, aes(x=Age, y=Average, group=Age)) + 
-  geom_boxplot(data=Daily.df, size=1) +
-  theme_bw(20)+
-  geom_point(data=c8, colour=col[1], size=3) +
-  geom_point(data=c9, colour=col[2], size=3) +
-  geom_point(data=c10, colour=col[3], size=3) +
-  geom_point(data=c11, colour=col[4], size=3) +
-  geom_point(data=c12, colour=col[5], size=3) +
-  geom_point(data=c13, colour=col[6], size=3) +
-  geom_point(data=c14, colour=col[7], size=3) +
-  geom_point(data=c15, colour=col[8], size=3) +
-  geom_point(data=c16, colour=col[9], size=3) +
-  geom_point(data=c17, colour=col[10], size=3) +
-  geom_point(data=c19, colour=col[11], size=3) +
-  geom_point(data=c20, colour=col[12], size=3) +
-  geom_point(data=c22, colour=col[13], size=3) +
-  geom_point(data=c23, colour=col[14], size=3) +
-  theme_bw(20)+
-  ylab("VOR amplitude (°)\n") +  
-  xlab("\nDevelopmental age (days)")
+# ggplot(Daily.df, aes(x=Age, y=Average, group=Age)) + 
+#   geom_boxplot(data=Daily.df, size=1) +
+#   theme_bw(20)+
+#   geom_point(data=c8, colour=col[1], size=3) +
+#   geom_point(data=c9, colour=col[2], size=3) +
+#   geom_point(data=c10, colour=col[3], size=3) +
+#   geom_point(data=c11, colour=col[4], size=3) +
+#   geom_point(data=c12, colour=col[5], size=3) +
+#   geom_point(data=c13, colour=col[6], size=3) +
+#   geom_point(data=c14, colour=col[7], size=3) +
+#   geom_point(data=c15, colour=col[8], size=3) +
+#   geom_point(data=c16, colour=col[9], size=3) +
+#   geom_point(data=c17, colour=col[10], size=3) +
+#   geom_point(data=c19, colour=col[11], size=3) +
+#   geom_point(data=c20, colour=col[12], size=3) +
+#   geom_point(data=c22, colour=col[13], size=3) +
+#   geom_point(data=c23, colour=col[14], size=3) +
+#   theme_bw(20)+
+#   ylab("VOR amplitude (°)\n") +  
+#   xlab("\nDevelopmental age (days)")
 
 stage2 <- subset(Daily.df, Stage == 2)
 stage3 <- subset(Daily.df, Stage == 3)
@@ -619,14 +627,14 @@ VOR_mlrt_test <-
 
 SibshipsSonia.df<-read.csv(file="SibshipsSonia.csv")
 str(SibshipsSonia.df)
-sibshiperrorstats <- summarySE(SibshipsSonia.df, measurevar="AverageAmp", groupvars="Time")
+sibshiperrorstats <- summarySE(SibshipsSonia.df, measurevar="AmpNoCutoff", groupvars="Time")
 sibshiperrorstats
 
 #subset only ages 4-5.75
 SubsetSibshipsSonia.df<- subset(SibshipsSonia.df, Time ==4 | Time ==4.25 | Time == 4.5| Time ==4.75| Time ==5.75)
 str(SubsetSibshipsSonia.df)
 SubsetSibshipsSonia.df$Time <- as.numeric(as.character(SubsetSibshipsSonia.df$Time))
-subsetsibshiperrorstats <- summarySE(SubsetSibshipsSonia.df, measurevar="AverageAmp", groupvars="Time")
+subsetsibshiperrorstats <- summarySE(SubsetSibshipsSonia.df, measurevar="AmpNoCutoff", groupvars="Time")
 subsetsibshiperrorstats
 
 c101 <- subset(SubsetSibshipsSonia.df, Clutch == "101")
@@ -636,41 +644,67 @@ c105 <- subset(SubsetSibshipsSonia.df, Clutch == "105")
 c106 <- subset(SubsetSibshipsSonia.df, Clutch == "106")
 
 colour = c("red", "orange", "green", "blue", "purple")
-ggplot(SubsetSibshipsSonia.df, aes(x=Time, y=AverageAmp, colour=Clutch)) + 
-  geom_point(data=c101, colour = colour[1], size=5) +
+ggplot(SubsetSibshipsSonia.df, aes(x=Time, y=AmpNoCutoff, colour=Clutch)) + 
+  geom_point(data=c101, colour = colour[1], size=3) +
   geom_line(data=c101, colour = colour[1])+
-  geom_errorbar(data=c101, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[1])+ 
-  geom_point(data=c102, colour = colour[2], size=5) +
+  geom_errorbar(data=c101, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[1])+ 
+  geom_point(data=c102, colour = colour[2], size=3) +
   geom_line(data=c102, colour = colour[2])+
-  geom_errorbar(data=c102, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[2])+ 
-  geom_point(data=c104, colour = colour[3], size=5) +
+  geom_errorbar(data=c102, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[2])+ 
+  geom_point(data=c104, colour = colour[3], size=3) +
   geom_line(data=c104, colour = colour[3])+
-  geom_errorbar(data=c104, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[3])+ 
-  geom_point(data=c105, colour = colour[4], size=5) +
+  geom_errorbar(data=c104, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[3])+ 
+  geom_point(data=c105, colour = colour[4], size=3) +
   geom_line(data=c105, colour = colour[4])+
-  geom_errorbar(data=c105, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[4])+ 
-  geom_point(data=c106, colour = colour[5], size=5) +
+  geom_errorbar(data=c105, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[4])+ 
+  geom_point(data=c106, colour = colour[5], size=3) +
   geom_line(data=c106, colour = colour[5])+
-  geom_errorbar(data=c106, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[5])+ 
+  geom_errorbar(data=c106, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[5])+ 
   theme_bw(20)+
   ylab("VOR amplitude (°)\n") +  
   xlab("\nDevelopmental age (days)")
 
+
+########## PLOT BY STAGE ############
+# 
+# ggplot(SubsetSibshipsSonia.df, aes(x=Stage, y=AmpNoCutoff, colour=Clutch)) + 
+#   geom_point(data=c101, colour = colour[1], size=5) +
+#   geom_line(data=c101, colour = colour[1])+
+#   geom_errorbar(data=c101, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[1])+ 
+#   geom_point(data=c102, colour = colour[2], size=5) +
+#   geom_line(data=c102, colour = colour[2])+
+#   geom_errorbar(data=c102, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[2])+ 
+#   geom_point(data=c104, colour = colour[3], size=5) +
+#   geom_line(data=c104, colour = colour[3])+
+#   geom_errorbar(data=c104, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[3])+ 
+#   geom_point(data=c105, colour = colour[4], size=5) +
+#   geom_line(data=c105, colour = colour[4])+
+#   geom_errorbar(data=c105, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[4])+ 
+#   geom_point(data=c106, colour = colour[5], size=5) +
+#   geom_line(data=c106, colour = colour[5])+
+#   geom_errorbar(data=c106, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, colour = colour[5])+ 
+#   theme_bw(20)+
+#   ylab("VOR amplitude (°)\n") +  
+#   xlab("\nDevelopmental stage (stage)")
+# 
+# ggplot(SubsetSibshipsSonia.df, aes(x=Stage, y=AmpNoCutoff, colour=Clutch)) + 
+#   geom_point(size=5) +
+#   theme_bw(20)+
+#   ylab("VOR amplitude (°)\n") +  
+#   xlab("\nDevelopmental stage (stage)")
+
 ###### test for age, clutch, age x clutch effects ###
-#### I THINK THIS IS WRONG - WHAT FAM SHOULD I USE? #####
 
-#age, clutch, and their interaction affected the VOR amplitude of hatchlings. 
-#Older embryos had higher VOR than did younger ones (Poisson GLM, age effect: χ2 =381.58, df = 4, P <2.2e-16), 
-#and sibship also accounts for changes in VOR amplitude (clutch effect: χ2 = 8.84, df = 1, P < 0.002955). 
-#However, the significant age × clutch interaction revealed that the developmental increase in hatching was not uniform across clutches (interaction effect: χ2 = 36.45, df = 4, P = 2.336e-07). 
-
-hist(SibshipsSonia.df$AverageAmp) ## zero heavy ??
+hist(SubsetSibshipsSonia.df$AmpNoCutoff) ## zero heavy ??
+#take out zeros
+sibsnozeros<-subset(SubsetSibshipsSonia.df, AmpNoCutoff > 15)
+hist(sibsnozeros$AmpNoCutoff)
 
 
-glm1 <- glm(AverageAmp ~ Time, family= poisson(link="log"), data=SibshipsSonia.df)
-glm2 <- glm(AverageAmp ~ Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
-glm3 <- glm(AverageAmp ~ Time + Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
-glm4 <- glm(AverageAmp ~ Time * Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
+glm1 <- glm(AmpNoCutoff ~ Time, family= poisson(link="log"), data=SibshipsSonia.df)
+glm2 <- glm(AmpNoCutoff ~ Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
+glm3 <- glm(AmpNoCutoff ~ Time + Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
+glm4 <- glm(AmpNoCutoff ~ Time * Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
 
 #library("AICcmodavg")
 VORmods<-list(glm1, glm2, glm3, glm4)
@@ -684,7 +718,7 @@ Anova(glm4)
 ##################################
 #We found no measureable VOR and no variation at 4.0 d (Fig. 5). A weak reflex first appeared in some clutches at 4.25 d, but the amplitude of VOR was not significantly greater than 6 hours prior (Tukey test, P = 0.38525, Fig. 5). VOR increased significantly with development at each subsequent interval (4.5 d, 4.75 d, and 5.75 d; Tukey post-hoc tests, all P < 0.001, Fig. 5). 
 SubsetSibshipsSonia.df$Time<-as.factor(SubsetSibshipsSonia.df$Time)
-lm3<-lm(AverageAmp ~ Time, data=SubsetSibshipsSonia.df)
+lm3<-lm(AmpNoCutoff ~ Time, data=SubsetSibshipsSonia.df)
 lm4<-glht(lm3, linfct=mcp(Time="Tukey"))
 summary(lm4)
 cld(lm4) 
@@ -692,17 +726,17 @@ cld(lm4)
 ##COMPARING COEFFS OF VARIATION
 # test for differences in variance for ages 4.25 and 4.5 d (vs all others)
 
-A <-subset(SibshipsSonia.df, Time==4.00)
-B <-subset(SibshipsSonia.df, Time==4.25)
-C <-subset(SibshipsSonia.df, Time==4.50)
-D <-subset(SibshipsSonia.df, Time==4.75)
-E <-subset(SibshipsSonia.df, Time==5.75)
+A <-subset(SubsetSibshipsSonia.df, Time==4.00)
+B <-subset(SubsetSibshipsSonia.df, Time==4.25)
+C <-subset(SubsetSibshipsSonia.df, Time==4.50)
+D <-subset(SubsetSibshipsSonia.df, Time==4.75)
+E <-subset(SubsetSibshipsSonia.df, Time==5.75)
 
 # The coefficient of variation was significantly higher at 4.25 and 4.50 d than at other time points tested (Modified signed-likelihood ratio test, test statistic = 19.70425, P=0.0001954618, Fig. 5), 
 sibs <- data.frame(Test = c(4.25, 4.50, 4.75, 5.75),
-                   Mean = c(mean(B$AverageAmp), mean(C$AverageAmp), mean(D$AverageAmp), mean(E$AverageAmp)),
-                   CV =   c(sd(B$AverageAmp)/mean(B$AverageAmp), sd(C$AverageAmp)/mean(C$AverageAmp), sd(D$AverageAmp)/mean(D$AverageAmp),  sd(E$AverageAmp)/mean(E$AverageAmp)),
-                   N =    c(length(B$AverageAmp), length(C$AverageAmp), length(D$AverageAmp), length(E$AverageAmp)))
+                   Mean = c(mean(B$AmpNoCutoff), mean(C$AmpNoCutoff), mean(D$AmpNoCutoff), mean(E$AmpNoCutoff)),
+                   CV =   c(sd(B$AmpNoCutoff)/mean(B$AmpNoCutoff), sd(C$AmpNoCutoff)/mean(C$AmpNoCutoff), sd(D$AmpNoCutoff)/mean(D$AmpNoCutoff),  sd(E$AmpNoCutoff)/mean(E$AmpNoCutoff)),
+                   N =    c(length(B$AmpNoCutoff), length(C$AmpNoCutoff), length(D$AmpNoCutoff), length(E$AmpNoCutoff)))
             
 sibs$SD <- with(sibs, CV * Mean)
                    
@@ -830,73 +864,53 @@ Sibships_mlrt_test2 <-
 ### test for clutch caused variation
 #Moreover, much of the variation in VOR of age 4.25 and 4.50 d individuals was structured among clutches. 
 
-hist(SibshipsSonia.df$AverageAmp, breaks=100) #non-normal
-hist(log(SibshipsSonia.df$AverageAmp))#still not normal
-shapiro.test(SibshipsSonia.df$AverageAmp) #not normal
+hist(SubsetSibshipsSonia.df$AmpNoCutoff, breaks=100) #non-normal
+hist(log(SubsetSibshipsSonia.df$AmpNoCutoff))#still not normal
+shapiro.test(SubsetSibshipsSonia.df$AmpNoCutoff) #not normal
 # P<0.05, therefore not normal so use non-parametric test
 
-kruskal.test(AverageAmp ~ Clutch, data= SibshipsSonia.df)
+kruskal.test(AmpNoCutoff ~ Clutch, data= SubsetSibshipsSonia.df)
 # no clutch effect for all ages
-kruskal.test(AverageAmp ~ Time, data= SibshipsSonia.df)
+kruskal.test(AmpNoCutoff ~ Time, data= SubsetSibshipsSonia.df)
 # yes time/age effect for all ages
 
-cor.test(SibshipsSonia.df$AverageAmp, SibshipsSonia.df$Clutch, method="pearson")
-#r=0.09538258 
-0.09538258*0.09538258
+cor.test(SubsetSibshipsSonia.df$AmpNoCutoff, SubsetSibshipsSonia.df$Clutch, method="pearson")
+#r=0.141002 
+cor(SubsetSibshipsSonia.df$AmpNoCutoff, SubsetSibshipsSonia.df$Clutch)
+0.141002*0.141002
 #The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.009097837.
 
 
-greatest.variability <- subset(SibshipsSonia.df, SibshipsSonia.df$Time==4.25|SibshipsSonia.df$Time==4.5)
-kruskal.test(AverageAmp ~ Clutch, data= greatest.variability)
+greatest.variability <- subset(SubsetSibshipsSonia.df, SubsetSibshipsSonia.df$Time==4.25|SibshipsSonia.df$Time==4.5)
+kruskal.test(AmpNoCutoff ~ Clutch, data= greatest.variability)
 # no clutch effect for age 4.25 an 4.5
-kruskal.test(AverageAmp ~ Time, data= greatest.variability)
+kruskal.test(AmpNoCutoff ~ Time, data= greatest.variability)
 # yes time/age effect for ages 4.25 and 4.5
 
-cor.test(greatest.variability$AverageAmp, greatest.variability$Clutch, method="pearson")
-#r=0.606184 
-0.606184 * 0.606184 
+cor.test(greatest.variability$AmpNoCutoff, greatest.variability$Clutch, method="pearson")
+#r=0.2192349 
+0.2192349 * 0.2192349 
 #The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.367459. 
 
 
-four.twofive <- subset(SibshipsSonia.df, SibshipsSonia.df$Time==4.25)
-kruskal.test(AverageAmp ~ Clutch, data= four.twofive)
+four.twofive <- subset(SubsetSibshipsSonia.df, SubsetSibshipsSonia.df$Time==4.25)
+kruskal.test(AmpNoCutoff ~ Clutch, data= four.twofive)
 # no clutch effect for age 4.25 
-cor.test(four.twofive$AverageAmp, four.twofive$Clutch, method="pearson")
-#r=0.7107471 
-0.7107471  * 0.7107471 
-#The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.5051614 
+cor.test(four.twofive$AmpNoCutoff, four.twofive$Clutch, method="pearson")
+#r=0.4388727  
+0.4388727   * 0.4388727  
+#The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.1926092 
 
 
-four.five<- subset(SibshipsSonia.df, SibshipsSonia.df$Time==4.5)
-kruskal.test(AverageAmp ~ Clutch, data= four.five)
+four.five<- subset(SubsetSibshipsSonia.df, SubsetSibshipsSonia.df$Time==4.5)
+kruskal.test(AmpNoCutoff ~ Clutch, data= four.five)
 # no clutch effect for age 4.5
-cor.test(four.five$AverageAmp, four.five$Clutch, method="pearson")
+cor.test(four.five$AmpNoCutoff, four.five$Clutch, method="pearson")
 #r=0.9255137 
-0.9255137   * 0.9255137  
+0.8119575    * 0.8119575   
 #The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.8565756.  
 
 
-ggplot(SibshipsSonia.df, aes(x=Stage, y=AverageAmp, colour=Clutch)) + 
-  geom_point(data=c101, colour = colour[1], size=5) +
-  geom_line(data=c101, colour = colour[1])+
-  geom_errorbar(data=c101, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[1])+ 
-  geom_point(data=c102, colour = colour[2], size=5) +
-  geom_line(data=c102, colour = colour[2])+
-  geom_errorbar(data=c102, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[2])+ 
-  geom_point(data=c104, colour = colour[3], size=5) +
-  geom_line(data=c104, colour = colour[3])+
-  geom_errorbar(data=c104, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[3])+ 
-  geom_point(data=c105, colour = colour[4], size=5) +
-  geom_line(data=c105, colour = colour[4])+
-  geom_errorbar(data=c105, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[4])+ 
-  geom_point(data=c106, colour = colour[5], size=5) +
-  geom_line(data=c106, colour = colour[5])+
-  geom_errorbar(data=c106, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width=0.05, colour = colour[5])+ 
-  theme_bw(20)+
-  #theme (panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank())+
-  #geom_errorbar(data = SibshipsSonia.df, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width = 0.05, colour = Clutch)+  
-  ylab("VOR amplitude (°)\n") +  
-  xlab("\nDevelopmental stage")
 
 ###################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################
@@ -911,7 +925,11 @@ ggplot(SibshipsSonia.df, aes(x=Stage, y=AverageAmp, colour=Clutch)) +
 
 ShakeRoll.df<-read.csv(file="ShakeRoll.csv")
 
-ShakeRoll.df$HorNH<-as.numeric(ShakeRoll.df$HorNH)
+#ShakeRoll.df$HorNH<-as.numeric(as.character(ShakeRoll.df$HorNH))
+#ShakeRoll.df$SUM.of.trait.values<-as.numeric(as.character(ShakeRoll.df$SUM.of.trait.values))
+ShakeRoll.df$HorNH<-as.factor(ShakeRoll.df$HorNH)
+ShakeRoll.df$SUM.of.trait.values<-as.factor(ShakeRoll.df$SUM.of.trait.values)
+
 
 str(ShakeRoll.df)
 min(ShakeRoll.df$SUM.of.trait.values)
@@ -951,69 +969,38 @@ younger <- subset(ShakeRoll.df, ShakeRoll.df$SUM.of.trait.values<5)
 length(younger$AverageAmp) #N=18
 sum(younger$PropH) #none hatched
 mean(younger$AverageAmp) #average VOR was 2.028089
-mean(younger$AverageR2) #average R2 was 0.2722102
 sd(younger$AverageAmp) 
-sd(younger$AverageR2)
+se(younger$AverageAmp)
 
-ggplot(ShakeRoll.df, aes(x=as.factor(SUM.of.trait.values), y=PropH)) + 
-  geom_boxplot(data=ShakeRoll.df, size=1, na.rm=T) +
-  ylab("Proportion of clutch hatched\n") +  
-  theme_bw(20) +
-  xlab("\n Developmental stage")
+# ggplot(ShakeRoll.df, aes(x=as.factor(SUM.of.trait.values), y=PropH)) + 
+#   geom_boxplot(data=ShakeRoll.df, size=1, na.rm=T) +
+#   ylab("Proportion of clutch hatched\n") +  
+#   theme_bw(20) +
+#   xlab("\n Developmental stage")
+# 
+# ggplot(ShakeRoll.df, aes(x=as.factor(SUM.of.trait.values), y=AverageAmp)) + 
+#   geom_boxplot(data=ShakeRoll.df, size=1, na.rm=T) +
+#   ylab("VOR amplitude (°)\n") + 
+#   theme_bw(20) +
+#   xlab("\n Developmental stage")
 
-# Tukey test PropH
-ShakeRoll.df$SUM.of.trait.values  <-as.factor(ShakeRoll.df$SUM.of.trait.values  )
-lm5<-lm(PropH~SUM.of.trait.values  , data=ShakeRoll.df)
-lm6<-glht(lm5, linfct=mcp(SUM.of.trait.values  ="Tukey"))
-summary(lm6)
-cld(lm6) 
+#TUKEY
 
-ggplot(ShakeRoll.df, aes(x=as.factor(SUM.of.trait.values), y=AverageAmp)) + 
-  geom_boxplot(data=ShakeRoll.df, size=1, na.rm=T) +
-  ylab("VOR amplitude (°)\n") + 
-  theme_bw(20) +
-  xlab("\n Developmental stage")
+# lm6<-lm(PropH~SUM.of.trait.values, data=ShakeRoll.df)
+# sixph1<-glht(lm6, linfct=mcp(SUM.of.trait.values="Tukey"))
+# cld(sixph1) 
+# # 
+# ShakeRoll.df$RoundAmp<-as.factor(ShakeRoll.df$RoundAmp)
+# lm6<-lm(PropH~SUM.of.trait.values, data=ShakeRoll.df)
+# sixph1<-glht(lm6, linfct=mcp(SUM.of.trait.values="Tukey"))
+# cld(sixph1) 
 
-# Tukey test AverageAmp
-lm7<-lm(AverageAmp~SUM.of.trait.values, data=ShakeRoll.df)
-lm8<-glht(lm7, linfct=mcp(SUM.of.trait.values  ="Tukey"))
-summary(lm8)
-cld(lm8) 
+# mod1<-aov(PropH~SUM.of.trait.values, data=ShakeRoll.df)
+# TukeyHSD(mod1, "SUM.of.trait.values")
+# 
+# mod2<-aov(AverageAmp~SUM.of.trait.values, data=ShakeRoll.df)
+# TukeyHSD(mod2, "SUM.of.trait.values")
 
-#H vs. did not H at different stages
-stage5<- subset(ShakeRoll.df, ShakeRoll.df$SUM.of.trait.values==5)
-length(stage5)
-stage5.NH <-subset(stage5, ShakeRoll.df$HorNH==0)
-length(stage5.NH)
-stage5.H <-subset(stage5, ShakeRoll.df$HorNH==1)
-
-lm9<-lm(AverageAmp~HorNH, data=stage5)
-lm10<-glht(lm9, linfct=mcp(HorNH  ="Tukey"))
-summary(lm10)
-
-lm11<-lm(PropH~HorNH, data=stage5)
-lm12<-glht(lm11, linfct=mcp(HorNH  ="Tukey"))
-summary(lm12)
-
-stage6<- subset(ShakeRoll.df, ShakeRoll.df$SUM.of.trait.values==6)
-
-lm13<-lm(AverageAmp~HorNH, data=stage6)
-lm14<-glht(lm13, linfct=mcp(HorNH  ="Tukey"))
-summary(lm14)
-
-lm15<-lm(PropH~HorNH, data=stage6)
-lm16<-glht(lm15, linfct=mcp(HorNH  ="Tukey"))
-summary(lm16)
-
-stage7<- subset(ShakeRoll.df, ShakeRoll.df$SUM.of.trait.values==7)
-
-lm17<-lm(AverageAmp~HorNH, data=stage7)
-lm18<-glht(lm17, linfct=mcp(HorNH  ="Tukey"))
-summary(lm18)
-
-lm19<-lm(PropH~HorNH, data=stage7)
-lm20<-glht(lm19, linfct=mcp(HorNH  ="Tukey"))
-summary(lm20)
 
 # 2 boxplots for figure
 ShakeRoll.df$HorNH <- as.factor(ShakeRoll.df$HorNH)
@@ -1038,31 +1025,63 @@ ggplot_build(plot)$data
 
 #library(psych)
 ShakeRoll.df$SUM.of.trait.values<-as.numeric(ShakeRoll.df$SUM.of.trait.values)
+#When we include all stages (1–7) in the analysis, more developed stages of embryos showed greater clutch hatching rates (Pearson’s correlations: r169= 0.5447, P=1.332e-14, Fig. 5b) 
 cor.test(ShakeRoll.df$AverageAmp, ShakeRoll.df$SUM.of.trait.values, method="pearson")
-cor.test(ShakeRoll.df$PropH, ShakeRoll.df$SUM.of.trait.values, method="pearson")
+#PropH ~ Compare avg/mode stage per clutch to propH
+PropHbyStage<-aggregate(ShakeRoll.df$SUM.of.trait.values, list(ShakeRoll.df$PropH), mean)
+cor.test(PropHbyStage[,1], PropHbyStage[,2])
 
 ## Subset by older embryos (take out Stage 1-4)
 older<- subset(ShakeRoll.df, ShakeRoll.df$SUM.of.trait.values>4)
 cor.test(older$AverageAmp, older$SUM.of.trait.values, method="pearson")
-cor.test(older$PropH, older$SUM.of.trait.values, method="pearson")
+olderPropHbyStage<-aggregate(older$SUM.of.trait.values, list(older$PropH), mean)
+cor.test(olderPropHbyStage[,1], olderPropHbyStage[,2], method="pearson")
 
-
-## Subset by partially hatched clutches (take out PropH==0 and PropH==1)
+## Subset by partially hatched clutches (take out PropH==0)
 parthatch<-subset(ShakeRoll.df, ShakeRoll.df$PropH<1 & ShakeRoll.df$PropH>0)
 cor.test(parthatch$AverageAmp, parthatch$SUM.of.trait.values, method="pearson")
-cor.test(parthatch$PropH, parthatch$SUM.of.trait.values, method="pearson")
+partHPropHbyStage<-aggregate(parthatch$SUM.of.trait.values, list(parthatch$PropH), mean)
+cor.test(partHPropHbyStage[,1], partHPropHbyStage[,2], method="pearson")
+
+
 
 ## signif difference in VOR between H and NH??
-# in stages 5-7:
-lm21<-lm(AverageAmp~HorNH, data=older)
-lm22<-glht(lm21, linfct=mcp(HorNH  ="Tukey"))
-summary(lm22) ## no significant differences in VOR
 
-# in partially hatched clutches:
-lm23<-lm(AverageAmp~HorNH, data=parthatch)
-lm24<-glht(lm23, linfct=mcp(HorNH  ="Tukey"))
-summary(lm24)
+# # in stages 5-7:
+# lm21<-lm(AverageAmp~HorNH, data=older)
+# lm22<-glht(lm21, linfct=mcp(HorNH  ="Tukey"))
+# summary(lm22) ## no significant differences in VOR
+# 
+# # in partially hatched clutches:
+# lm23<-lm(AverageAmp~HorNH, data=parthatch)
+# lm24<-glht(lm23, linfct=mcp(HorNH  ="Tukey"))
+# summary(lm24)
 
+#H vs. did not H at different stages
+lm13<-lm(AverageAmp~HorNH, data=stage6)
+lm14<-glht(lm13, linfct=mcp(HorNH  ="Tukey"))
+summary(lm14)
+
+lm15<-lm(PropH~HorNH, data=stage6)
+lm16<-glht(lm15, linfct=mcp(HorNH  ="Tukey"))
+summary(lm16)
+
+
+lm17<-lm(AverageAmp~HorNH, data=stage7)
+lm18<-glht(lm17, linfct=mcp(HorNH  ="Tukey"))
+summary(lm18)
+
+lm19<-lm(PropH~HorNH, data=stage7)
+lm20<-glht(lm19, linfct=mcp(HorNH  ="Tukey"))
+summary(lm20)
+
+lm9<-lm(AverageAmp~HorNH, data=stage5)
+lm10<-glht(lm9, linfct=mcp(HorNH  ="Tukey"))
+summary(lm10)
+
+lm11<-lm(PropH~HorNH, data=stage5)
+lm12<-glht(lm11, linfct=mcp(HorNH  ="Tukey"))
+summary(lm12)
 
 # variation in stage 5 vs variation in other stages. 
 
@@ -1088,45 +1107,48 @@ propH_mlrt_test <-
                  PropH, 
                  SUM.of.trait.values))
 
-# Does hatching inc with vestibular function?
-cor.test(ShakeRoll.df$AverageAmp, ShakeRoll.df$PropH, method="pearson")
+# # Does hatching inc with vestibular function?
+# cor.test(ShakeRoll.df$AverageAmp, ShakeRoll.df$PropH, method="pearson")
+# 
+# ## in older embryos (take out Stage 1-4)
+# cor.test(older$AverageAmp, older$PropH, method="pearson")
+# 
+# ## in partially hatched clutches (take out PropH==0 and PropH==1)
+# cor.test(parthatch$AverageAmp, parthatch$PropH, method="pearson")
 
-## in older embryos (take out Stage 1-4)
-cor.test(older$AverageAmp, older$PropH, method="pearson")
 
-## in partially hatched clutches (take out PropH==0 and PropH==1)
-cor.test(parthatch$AverageAmp, parthatch$PropH, method="pearson")
+# ## shake and roll, colored according to developmental stage. 
+# 
+# ShakeRoll.df$HorNH <- factor(ShakeRoll.df$HorNH)
+# str(ShakeRoll.df$HorNH)
+# colour = c("red", "orange", "yellow", "green", "blue", "purple", "brown")
+# ggplot(ShakeRoll.df, aes(x=AverageAmp, y=PropH, colour=SUM.of.trait.values)) + 
+#   geom_point(data=stage1, colour = colour[1], size=3) +
+#   geom_point(data=stage2, colour = colour[2], size=3) +
+#   geom_point(data=stage3, colour = colour[3], size=3) +
+#   geom_point(data=stage4, colour = colour[4], size=3) +
+#   geom_point(data=stage5, colour = colour[5], size=3) +
+#   geom_point(data=stage6, colour = colour[6], size=3) +
+#   geom_point(data=stage7, colour = colour[7], size=3) +
+#   theme_bw(20)+
+#   #theme (panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank())+
+#   #geom_errorbar(data = SibshipsSonia.df, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width = 0.05, colour = Clutch)+  
+#   ylab("Proportion of clutch hatched\n") +  
+#   xlab("VOR amplitude (°)\n")
 
-## shake and roll, colored according to developmental stage. 
-
-ShakeRoll.df$HorNH <- factor(ShakeRoll.df$HorNH)
-str(ShakeRoll.df$HorNH)
-colour = c("red", "orange", "yellow", "green", "blue", "purple", "brown")
-ggplot(ShakeRoll.df, aes(x=AverageAmp, y=PropH, colour=SUM.of.trait.values)) + 
-  geom_point(data=stage1, colour = colour[1], size=5) +
-  geom_point(data=stage2, colour = colour[2], size=5) +
-  geom_point(data=stage3, colour = colour[3], size=5) +
-  geom_point(data=stage4, colour = colour[4], size=5) +
-  geom_point(data=stage5, colour = colour[5], size=5) +
-  geom_point(data=stage6, colour = colour[6], size=5) +
-  geom_point(data=stage7, colour = colour[7], size=5) +
-  theme_bw(20)+
-  #theme (panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank())+
-  #geom_errorbar(data = SibshipsSonia.df, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width = 0.05, colour = Clutch)+  
-  ylab("Proportion of clutch hatched\n") +  
-  xlab("VOR amplitude (°)\n")
-
-ggplot(ShakeRoll.df, aes(x=SUM.of.trait.values, y=AverageAmp, colour=HorNH)) + 
-  geom_point(size=3, position = "jitter") +
-  theme_bw(20)+
-  #theme (panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank())+
-  #geom_errorbar(data = SibshipsSonia.df, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width = 0.05, colour = Clutch)+  
-  ylab("VOR amplitude (°)\n")+
-  xlab("\nDevelopmental stage")
+#####
+# ggplot(ShakeRoll.df, aes(x=SUM.of.trait.values, y=AverageAmp, colour=HorNH)) + 
+#   geom_point(size=3, position = "jitter") +
+#   theme_bw(20)+
+#   #theme (panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank())+
+#   #geom_errorbar(data = SibshipsSonia.df, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width = 0.05, colour = Clutch)+  
+#   ylab("VOR amplitude (°)\n")+
+#   xlab("\nDevelopmental stage")
 
 Hat<- subset(ShakeRoll.df, HorNH == "1")
 NoHat<- subset(ShakeRoll.df, HorNH == "0")
 
+#### BY COLOR
 ggplot(ShakeRoll.df, aes(x=AverageAmp, y=PropH, colour=HorNH)) + 
   geom_point(data=Hat, colour = "#00BFC4", size=3) +
   geom_point(data=NoHat, colour = "#F8766D", size=3) +
@@ -1135,6 +1157,29 @@ ggplot(ShakeRoll.df, aes(x=AverageAmp, y=PropH, colour=HorNH)) +
   #geom_errorbar(data = SibshipsSonia.df, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width = 0.05, colour = Clutch)+  
   ylab("Proportion of clutch hatched\n") +  
   xlab("VOR amplitude (°)\n")
+
+##### BY FILL 
+ggplot(ShakeRoll.df, aes(x=AverageAmp, y=PropH, shape=HorNH)) + 
+  geom_point(data=Hat, shape = 21, size=3) +
+  geom_point(data=NoHat, shape= 16, size=3) +
+  #scale_shape_manual(values = c(16, 21)) +
+  theme_bw(20)+
+  #theme (panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank())+
+  #geom_errorbar(data = SibshipsSonia.df, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width = 0.05, colour = Clutch)+  
+  ylab("Proportion of clutch hatched\n") +  
+  xlab("VOR amplitude (°)\n")
+
+lowVOR<-subset(ShakeRoll.df, AverageAmp < 6)
+sum(lowVOR$PropH)
+sum(as.numeric(as.character(lowVOR$HorNH)))
+length(lowVOR)
+
+highVOR<-subset(ShakeRoll.df, AverageAmp > 6)
+length(highVOR)
+sum(as.numeric(as.character(highVOR$HorNH)))
+148-67
+81/148
+67/148
 
 ###################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################
@@ -1354,7 +1399,9 @@ str(tactile$Latency.to.Hatch.in.Minutes)
 range(tactile$Latency.to.Hatch.in.Minutes, na.rm=T)
 range(tactile$Average.Amplitude, na.rm=T)
 
-ggplot(tactile, aes(x=Average.Amplitude, y=Latency.to.Hatch.in.Minutes, color=Developmental.Stage)) + 
+ggplot(tactile, aes(x=Average.Amplitude, y=Latency.to.Hatch.in.Minutes)) + 
+  geom_point()+
+  geom_smooth(method="lm", se=F, color="black")+
   geom_point(data=st1, colour = colour[1], size=3) +
   geom_point(data=st2, colour = colour[2], size=3) +
   geom_point(data=st3, colour = colour[3], size=3) +
