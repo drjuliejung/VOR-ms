@@ -420,9 +420,28 @@ Daily.df$Average <- as.numeric(as.character(Daily.df$Average))
 Daily.df$Stage <- as.numeric(as.character(Daily.df$Stage))
 Daily.df$Age <- as.numeric(as.character(Daily.df$Age))
 
-# There was a strong developmental trend in VOR amplitude, with younger, less developed embryos displaying lower VOR and older, more developed embryos displaying greater VOR (age: Jonckheere-Terpstra test, JT=332.5, p = 0.009047; stage: Jonckheere-Terpstra test, JT=325.5, p=0.0005809; Fig. 4).
-jonckheere.test(Daily.df$Average, Daily.df$Age, alternative="increasing")
-jonckheere.test(Daily.df$Average, Daily.df$Stage, alternative="increasing")
+
+##### plot the residuals 
+m<-lm(data=Daily.df, Average~Age)
+plot(x=Daily.df$Age, y=m$residuals)
+#or
+e<-resid(m)
+plot(x=Daily.df$Age, y=e)
+hist(e, xlim = c(-4 * sd(e), 4 * sd(e)), breaks = 20, main = "Histogram of Residuals")
+
+plot(m$model$Age, m$residuals)
+
+par(mfrow = c(2, 2))
+plot(m)
+par(mfrow = c(1, 1)) # return
+
+s <- shapiro.test(m$residuals)
+s
+## THIS IS NORMAL 
+
+#### There was a strong developmental trend in VOR amplitude, with younger, less developed embryos displaying lower VOR and older, more developed embryos displaying greater VOR (age: Jonckheere-Terpstra test, JT=332.5, p = 0.009047; stage: Jonckheere-Terpstra test, JT=325.5, p=0.0005809; Fig. 4).
+####jonckheere.test(Daily.df$Average, Daily.df$Age, alternative="increasing")
+####jonckheere.test(Daily.df$Average, Daily.df$Stage, alternative="increasing")
 
 #The vestibulo-ocular reflex increased in magnitude across embryonic development with age between 3–7 d (Pearson’s correlations: r34=0.5479, P=0.0005417) and stage between Warkentin et al (2017) stages 2–7 (Pearson’s correlations: r34= 0.7782324, P=2.314e-8, Fig. 4). 
 cor.test(Daily.df$Age, Daily.df$Average, method="pearson")
@@ -431,20 +450,19 @@ cor.test(Daily.df$Stage, Daily.df$Average, method="pearson")
 #We also observed a corresponding age (ANOVA, f1, 34=14.588, P=0.0005417) and stage effect (ANOVA, f1, 34=52.217, P=2.314e-8), but no significant clutch effect (ANOVA, f13, 22=0.8825, P=0.5812). 
 hist(Daily.df$Average) #normal enough to use an ANOVA
 mod1 <- aov(Average ~ Age, data=Daily.df)
-mod2 <- aov(Average ~ Stage, data=Daily.df)
-mod3 <- aov(Average ~ Age + Stage, data=Daily.df)
-mod4 <- aov(Average ~ Age + Stage + Clutch, data=Daily.df)
-mod5 <- aov(Average ~ Age + Stage + Clutch + Age * Clutch, data=Daily.df)
-mod6 <- aov(Average ~ Stage + Clutch, data=Daily.df)
+#mod2 <- aov(Average ~ Stage, data=Daily.df)
+#mod3 <- aov(Average ~ Age + Stage, data=Daily.df)
+#mod4 <- aov(Average ~ Age + Stage + Clutch, data=Daily.df)
+#mod5 <- aov(Average ~ Age + Stage + Clutch + Age * Clutch, data=Daily.df)
+#mod6 <- aov(Average ~ Stage + Clutch, data=Daily.df)
 
-models<-list(mod1, mod2, mod3, mod4, mod5, mod6)
-aictab(models)
+#models<-list(mod1, mod2, mod3, mod4, mod5, mod6)
+#aictab(models)
 
-Anova(glm4)
 #library(car)
 Anova(mod1)
-Anova(mod2)
-Anova(mod3)
+#Anova(mod2)
+#Anova(mod3)
 
 # THE MAKING OF THE FIGURE(S):
 c8 <- subset(Daily.df, Clutch == "C8")
@@ -551,9 +569,17 @@ ggplot(Daily.df, aes(x=Age, y=Average, group=Age)) +
   geom_point(data=stage5, colour="green", size=3) +
   geom_point(data=stage6, colour="blue", size=3) +
   geom_point(data=stage7, colour="purple", size=3) +
+  ylab("VOR amplitude (°)\n") +  
+  xlab("\nDevelopmental age (days)")
+
+# PERHAPS I SHOULD MAKE A PLOT NOT COLORED BY STAGE
+ggplot(Daily.df, aes(x=Age, y=Average, group=Age)) + 
+  geom_boxplot(data=Daily.df, size=1) +
+  geom_point(data=Daily.df, size=3)+
   theme_bw(20)+
   ylab("VOR amplitude (°)\n") +  
   xlab("\nDevelopmental age (days)")
+
 
 ############################# END THE MAKING OF THE FIGURES ############################
 # Tukey test
@@ -637,6 +663,29 @@ SubsetSibshipsSonia.df$Time <- as.numeric(as.character(SubsetSibshipsSonia.df$Ti
 subsetsibshiperrorstats <- summarySE(SubsetSibshipsSonia.df, measurevar="AmpNoCutoff", groupvars="Time")
 subsetsibshiperrorstats
 
+
+##### plot the residuals 
+m2<-lm(data=SubsetSibshipsSonia.df, AmpNoCutoff~Time)
+str(SubsetSibshipsSonia.df$Time)
+str(m2$residuals)
+
+plot(x=SubsetSibshipsSonia.df$Time, y=m2$residuals)
+#or
+e<-resid(m2)
+plot(x=SubsetSibshipsSonia.df$Time, y=e)
+hist(e, xlim = c(-4 * sd(e), 4 * sd(e)), breaks = 20, main = "Histogram of Residuals")
+
+plot(m2$model$Time, m2$residuals)
+
+par(mfrow = c(2, 2))
+plot(m2)
+par(mfrow = c(1, 1)) # return
+
+s <- shapiro.test(m2$residuals)
+s
+## THIS IS NOT NORMAL 
+
+
 c101 <- subset(SubsetSibshipsSonia.df, Clutch == "101")
 c102 <- subset(SubsetSibshipsSonia.df, Clutch == "102")
 c104 <- subset(SubsetSibshipsSonia.df, Clutch == "104")
@@ -697,9 +746,18 @@ ggplot(SubsetSibshipsSonia.df, aes(x=Time, y=AmpNoCutoff, colour=Clutch)) +
 
 hist(SubsetSibshipsSonia.df$AmpNoCutoff) ## zero heavy ??
 #take out zeros
-sibsnozeros<-subset(SubsetSibshipsSonia.df, AmpNoCutoff > 15)
+sibsnozeros<-subset(SubsetSibshipsSonia.df, AmpNoCutoff > 0)
 hist(sibsnozeros$AmpNoCutoff)
 
+#does including clutch influence the fit of your model?
+#expect to find clutch effects only at some ages. 
+# AmpNoCutoff ~ Time
+# include clutch as a random effect - 
+# use a linear model - fit a diff
+# include age as a random slope (continuous in random variation)
+# control for interaction between age and clutch. 
+# random slope model - 
+# age also as a main effect 
 
 glm1 <- glm(AmpNoCutoff ~ Time, family= poisson(link="log"), data=SibshipsSonia.df)
 glm2 <- glm(AmpNoCutoff ~ Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
@@ -1204,6 +1262,10 @@ jonckheere.test(as.numeric(tactile$Average.Amplitude), as.numeric(tactile$Develo
 
 cor.test(as.numeric(tactile$Average.Amplitude), as.numeric(tactile$Age.Block), method="pearson")
 cor.test(as.numeric(tactile$Average.Amplitude), as.numeric(tactile$Developmental.Stage), method="pearson")
+
+
+### TAKE OUT AGE AND ADD FAMILY    non-gaussian. look at residuals -- , 
+# 
 
 glm1 <- glm(Average.Amplitude ~ Age.Block, data=tactile)
 glm2 <- glm(Average.Amplitude ~ Developmental.Stage, data=tactile)
