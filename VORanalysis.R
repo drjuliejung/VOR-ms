@@ -395,13 +395,11 @@ library(car)
 library(ggplot2)
 library(MASS)
 library(multcomp)
-
-library(MASS)
 library(pscl)
 library(AICcmodavg)
-library(car)
 library(psych)
 library(lme4)
+library(sciplot)
 
 ###################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################
@@ -411,15 +409,13 @@ library(lme4)
 ###################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################
 
-
-Daily.df<-read.csv(file="Daily.csv")
+Daily.df<-read.csv(file="Daily.csv", stringsAsFactors = TRUE)
 error <- summarySE(Daily.df, measurevar="Average", groupvars="Age")
 
 str(Daily.df)
 Daily.df$Average <- as.numeric(as.character(Daily.df$Average))
-Daily.df$Stage <- as.numeric(as.character(Daily.df$Stage))
+Daily.df$Stage <- as.factor(Daily.df$Stage)
 Daily.df$Age <- as.numeric(as.character(Daily.df$Age))
-
 
 ##### plot the residuals 
 m<-lm(data=Daily.df, Average~Age)
@@ -439,30 +435,14 @@ s <- shapiro.test(m$residuals)
 s
 ## THIS IS NORMAL 
 
-#### There was a strong developmental trend in VOR amplitude, with younger, less developed embryos displaying lower VOR and older, more developed embryos displaying greater VOR (age: Jonckheere-Terpstra test, JT=332.5, p = 0.009047; stage: Jonckheere-Terpstra test, JT=325.5, p=0.0005809; Fig. 4).
-####jonckheere.test(Daily.df$Average, Daily.df$Age, alternative="increasing")
-####jonckheere.test(Daily.df$Average, Daily.df$Stage, alternative="increasing")
-
 #The vestibulo-ocular reflex increased in magnitude across embryonic development with age between 3–7 d (Pearson’s correlations: r34=0.5479, P=0.0005417) and stage between Warkentin et al (2017) stages 2–7 (Pearson’s correlations: r34= 0.7782324, P=2.314e-8, Fig. 4). 
 cor.test(Daily.df$Age, Daily.df$Average, method="pearson")
-cor.test(Daily.df$Stage, Daily.df$Average, method="pearson")
+#cor.test(Daily.df$Stage, Daily.df$Average, method="pearson")
 
 #We also observed a corresponding age (ANOVA, f1, 34=14.588, P=0.0005417) and stage effect (ANOVA, f1, 34=52.217, P=2.314e-8), but no significant clutch effect (ANOVA, f13, 22=0.8825, P=0.5812). 
 hist(Daily.df$Average) #normal enough to use an ANOVA
-mod1 <- aov(Average ~ Age, data=Daily.df)
-#mod2 <- aov(Average ~ Stage, data=Daily.df)
-#mod3 <- aov(Average ~ Age + Stage, data=Daily.df)
-#mod4 <- aov(Average ~ Age + Stage + Clutch, data=Daily.df)
-#mod5 <- aov(Average ~ Age + Stage + Clutch + Age * Clutch, data=Daily.df)
-#mod6 <- aov(Average ~ Stage + Clutch, data=Daily.df)
-
-#models<-list(mod1, mod2, mod3, mod4, mod5, mod6)
-#aictab(models)
-
-#library(car)
+mod1 <- lm(Average ~ Age, data=Daily.df)
 Anova(mod1)
-#Anova(mod2)
-#Anova(mod3)
 
 # THE MAKING OF THE FIGURE(S):
 c8 <- subset(Daily.df, Clutch == "C8")
@@ -488,70 +468,8 @@ sum(Daily.df$Age==7) #2
 
 mean(Daily.df$Age) #4.75
 
-col = rainbow(14)
 
-###############   colorful plot with lines   ###############
-# 
-# ggplot(Daily.df, aes(x=Age, y=Average, colour = Tad)) + 
-#   geom_point(data=c8, colour=col[1], size=3) +
-#   geom_line(data=c8, colour=col[1])+
-#   geom_point(data=c9, colour=col[2], size=3) +
-#   geom_line(data=c9, colour=col[2])+
-#   geom_point(data=c10, colour=col[3], size=3) +
-#   geom_line(data=c10, colour=col[3])+
-#   geom_point(data=c11, colour=col[4], size=3) +
-#   geom_line(data=c11, colour=col[4])+
-#   geom_point(data=c12, colour=col[5], size=3) +
-#   geom_line(data=c12, colour=col[5])+
-#   geom_point(data=c13, colour=col[6], size=3) +
-#   geom_line(data=c13, colour=col[6])+
-#   geom_point(data=c14, colour=col[7], size=3) +
-#   geom_line(data=c14, colour=col[7])+
-#   geom_point(data=c15, colour=col[8], size=3) +
-#   geom_line(data=c15, colour=col[8])+
-#   geom_point(data=c16, colour=col[9], size=3) +
-#   geom_line(data=c16, colour=col[9])+
-#   geom_point(data=c17, colour=col[10], size=3) +
-#   geom_line(data=c17, colour=col[10])+
-#   geom_point(data=c19, colour=col[11], size=3) +
-#   geom_line(data=c19, colour=col[11])+
-#   geom_point(data=c20, colour=col[12], size=3) +
-#   geom_line(data=c20, colour=col[12])+
-#   geom_point(data=c22, colour=col[13], size=3) +
-#   geom_line(data=c22, colour=col[13])+
-#   geom_point(data=c23, colour=col[14], size=3) +
-#   geom_line(data=c23, colour=col[14])+
-#   theme_bw(20)+
-#   ylab("VOR Amplitude (°)\n") +  
-#   xlab("\nDevelopmental age (days)")
-# #geom_errorbar(data=error, aes(ymin=Average-se, ymax=Average+se), width=.1)
-# #scale_fill_continuous(guide=FALSE)
-
-
-
-# SAME DATA AS BOXPLOT
-
-# ggplot(Daily.df, aes(x=Age, y=Average, group=Age)) + 
-#   geom_boxplot(data=Daily.df, size=1) +
-#   theme_bw(20)+
-#   geom_point(data=c8, colour=col[1], size=3) +
-#   geom_point(data=c9, colour=col[2], size=3) +
-#   geom_point(data=c10, colour=col[3], size=3) +
-#   geom_point(data=c11, colour=col[4], size=3) +
-#   geom_point(data=c12, colour=col[5], size=3) +
-#   geom_point(data=c13, colour=col[6], size=3) +
-#   geom_point(data=c14, colour=col[7], size=3) +
-#   geom_point(data=c15, colour=col[8], size=3) +
-#   geom_point(data=c16, colour=col[9], size=3) +
-#   geom_point(data=c17, colour=col[10], size=3) +
-#   geom_point(data=c19, colour=col[11], size=3) +
-#   geom_point(data=c20, colour=col[12], size=3) +
-#   geom_point(data=c22, colour=col[13], size=3) +
-#   geom_point(data=c23, colour=col[14], size=3) +
-#   theme_bw(20)+
-#   ylab("VOR amplitude (°)\n") +  
-#   xlab("\nDevelopmental age (days)")
-
+# DATA COLORED BY STAGE
 stage2 <- subset(Daily.df, Stage == 2)
 stage3 <- subset(Daily.df, Stage == 3)
 stage4 <- subset(Daily.df, Stage == 4)
@@ -559,7 +477,6 @@ stage5 <- subset(Daily.df, Stage == 5)
 stage6 <- subset(Daily.df, Stage == 6)
 stage7 <- subset(Daily.df, Stage == 7)
 
-# SAME DATA COLORED BY STAGE
 ggplot(Daily.df, aes(x=Age, y=Average, group=Age)) + 
   geom_boxplot(data=Daily.df, size=1) +
   theme_bw(20)+
@@ -581,8 +498,8 @@ ggplot(Daily.df, aes(x=Age, y=Average, group=Age)) +
   xlab("\nDevelopmental age (days)")
 
 
-############################# END THE MAKING OF THE FIGURES ############################
 # Tukey test
+
 # VOR did not change significantly from 4–7 d (Tukey post-hoc tests, all P>0.929, Fig. 4) but hatchlings tested at age 3 d showed significantly lower VOR than those aged 4–7 d (Tukey post-hoc tests, all P < 0.0007). 
 Daily.df$Age<-as.factor(Daily.df$Age)
 lm1<-lm(Average~Age, data=Daily.df)
@@ -590,58 +507,17 @@ lm2<-glht(lm1, linfct=mcp(Age="Tukey"))
 summary(lm2)
 cld(lm2) 
 
-# VOR_asymptotic_test <- 
-#   with(Daily.df, 
-#        asymptotic_test(Average, 
-#                        Age))
-# 
-# VOR_mlrt_test <- 
-#   with(Daily.df, 
-#        mslr_test(nr = 1e4, 
-#                  Average, 
-#                  Age))
+# Hatchlings showed significantly higher variability in VOR at 4 d, compared with all other ages (Modified signed-likelihood ratio test, test statistic = 9.270629, P = 0.002328577, Fig. 4). 
 
 Daily.4v3567<-Daily.df
 Daily.4v3567$Age<-as.numeric(Daily.4v3567$Age)
 Daily.4v3567$Age[Daily.4v3567$Age!= 4]<-"other"
 
-# Hatchlings showed significantly higher variability in VOR at 4 d, compared with all other ages (Modified signed-likelihood ratio test, test statistic = 9.270629, P = 0.002328577, Fig. 4). 
 VOR_mlrt_test <- 
   with(Daily.4v3567, 
        mslr_test(nr = 1e4, 
                  Average, 
                  Age))
-
-
-######## FIGURE VOR by STAGE (not used bc not enough of each stage)
-# ggplot(Daily.df, aes(x=as.factor(Stage), y=Average)) + 
-#   geom_boxplot(data=Daily.df, size=1)+
-#   theme_bw(20)+
-#   ylab("VOR amplitude (°)\n") +  
-#   xlab("\nDevelopmental stage")+
-#   geom_point(data=c8, colour=col[1], size=3) +
-#   geom_point(data=c9, colour=col[2], size=3) +
-#   geom_point(data=c10, colour=col[3], size=3) +
-#   geom_point(data=c11, colour=col[4], size=3) +
-#   geom_point(data=c12, colour=col[5], size=3) +
-#   geom_point(data=c13, colour=col[6], size=3) +
-#   geom_point(data=c14, colour=col[7], size=3) +
-#   geom_point(data=c15, colour=col[8], size=3) +
-#   geom_point(data=c16, colour=col[9], size=3) +
-#   geom_point(data=c17, colour=col[10], size=3) +
-#   geom_point(data=c19, colour=col[11], size=3) +
-#   geom_point(data=c20, colour=col[12], size=3) +
-#   geom_point(data=c22, colour=col[13], size=3) +
-#   geom_point(data=c23, colour=col[14], size=3)
-# 
-# sum(Daily.df$Stage==2) #3
-# sum(Daily.df$Stage==3) #4
-# sum(Daily.df$Stage==4) #0 
-# sum(Daily.df$Stage==5) #2
-# sum(Daily.df$Stage==6) #9
-# sum(Daily.df$Stage==7) #18
-# 
-# mean(Daily.df$Age) #4.75
 
 ###################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################
@@ -651,7 +527,7 @@ VOR_mlrt_test <-
 ###################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################
 
-SibshipsSonia.df<-read.csv(file="SibshipsSonia.csv")
+SibshipsSonia.df<-read.csv(file="SibshipsSonia.csv", stringsAsFactors = TRUE)
 str(SibshipsSonia.df)
 sibshiperrorstats <- summarySE(SibshipsSonia.df, measurevar="AmpNoCutoff", groupvars="Time")
 sibshiperrorstats
@@ -662,7 +538,6 @@ str(SubsetSibshipsSonia.df)
 SubsetSibshipsSonia.df$Time <- as.numeric(as.character(SubsetSibshipsSonia.df$Time))
 subsetsibshiperrorstats <- summarySE(SubsetSibshipsSonia.df, measurevar="AmpNoCutoff", groupvars="Time")
 subsetsibshiperrorstats
-
 
 ##### plot the residuals 
 m2<-lm(data=SubsetSibshipsSonia.df, AmpNoCutoff~Time)
@@ -684,7 +559,6 @@ par(mfrow = c(1, 1)) # return
 s <- shapiro.test(m2$residuals)
 s
 ## THIS IS NOT NORMAL 
-
 
 c101 <- subset(SubsetSibshipsSonia.df, Clutch == "101")
 c102 <- subset(SubsetSibshipsSonia.df, Clutch == "102")
@@ -713,6 +587,27 @@ ggplot(SubsetSibshipsSonia.df, aes(x=Time, y=AmpNoCutoff, colour=Clutch)) +
   ylab("VOR amplitude (°)\n") +  
   xlab("\nDevelopmental age (days)")
 
+######### NOT COLORED BY CLUTCH - just black and different shapes/line types
+
+ggplot(SubsetSibshipsSonia.df, aes(x=Time, y=AmpNoCutoff, group=Clutch)) + 
+  geom_point(data=c101, size=3, pch=8) +
+  geom_line(data=c101, linetype = "dotted")+
+  geom_errorbar(data=c101, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, linetype="dotted")+ 
+  geom_point(data=c102,size=3, pch=9) +
+  geom_line(data=c102, linetype="longdash")+
+  geom_errorbar(data=c102, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, linetype="longdash")+ 
+  geom_point(data=c104,  size=3, pch=15) +
+  geom_line(data=c104, linetype="dashed")+
+  geom_errorbar(data=c104, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, linetype="dashed")+ 
+  geom_point(data=c105, size=3, pch=17) +
+  geom_line(data=c105, linetype="dotdash")+
+  geom_errorbar(data=c105, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, linetype="dotdash")+ 
+  geom_point(data=c106,  size=3, pch=16) +
+  geom_line(data=c106, linetype="solid")+
+  geom_errorbar(data=c106, aes(ymin=AmpNoCutoff-SE, ymax=AmpNoCutoff+SE), width=0.05, linetype="solid")+ 
+  theme_bw(20)+
+  ylab("VOR amplitude (°)\n") +  
+  xlab("\nDevelopmental age (days)")
 
 ########## PLOT BY STAGE ############
 # 
@@ -742,41 +637,38 @@ ggplot(SubsetSibshipsSonia.df, aes(x=Time, y=AmpNoCutoff, colour=Clutch)) +
 #   ylab("VOR amplitude (°)\n") +  
 #   xlab("\nDevelopmental stage (stage)")
 
-###### test for age, clutch, age x clutch effects ###
+##### TAKE OUT 4.0 d  instead of cutoff by VOR – 
+#subset only ages 4.25-5.75 d
+No4dSubsetSibshipsSonia.df<- subset(SibshipsSonia.df, Time ==4.25 | Time == 4.5| Time ==4.75| Time ==5.75)
+str(No4dSubsetSibshipsSonia.df)
+No4dSubsetSibshipsSonia.df$Time <- as.numeric(as.character(No4dSubsetSibshipsSonia.df$Time))
+No4dsubsetsibshiperrorstats <- summarySE(No4dSubsetSibshipsSonia.df, measurevar="AmpNoCutoff", groupvars="Time")
+No4dsubsetsibshiperrorstats
 
-hist(SubsetSibshipsSonia.df$AmpNoCutoff) ## zero heavy ??
-#take out zeros
-sibsnozeros<-subset(SubsetSibshipsSonia.df, AmpNoCutoff > 0)
-hist(sibsnozeros$AmpNoCutoff)
+##### plot the residuals 
+m3<-lm(data=No4dSubsetSibshipsSonia.df, AmpNoCutoff~Time)
+str(No4dSubsetSibshipsSonia.df$Time)
+str(m3$residuals)
 
-#does including clutch influence the fit of your model?
-#expect to find clutch effects only at some ages. 
-# AmpNoCutoff ~ Time
-# include clutch as a random effect - 
-# use a linear model - fit a diff
-# include age as a random slope (continuous in random variation)
-# control for interaction between age and clutch. 
-# random slope model - 
-# age also as a main effect 
+plot(x=No4dSubsetSibshipsSonia.df$Time, y=m3$residuals)
+#or
+e<-resid(m3)
+plot(x=No4dSubsetSibshipsSonia.df$Time, y=e)
+hist(e, xlim = c(-4 * sd(e), 4 * sd(e)), breaks = 20, main = "Histogram of Residuals")
 
-glm1 <- glm(AmpNoCutoff ~ Time, family= poisson(link="log"), data=SibshipsSonia.df)
-glm2 <- glm(AmpNoCutoff ~ Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
-glm3 <- glm(AmpNoCutoff ~ Time + Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
-glm4 <- glm(AmpNoCutoff ~ Time * Clutch, family= poisson(link="log"), data=SibshipsSonia.df)
+plot(m3$model$Time, m3$residuals)
 
-#library("AICcmodavg")
-VORmods<-list(glm1, glm2, glm3, glm4)
-aictab(VORmods)
+par(mfrow = c(2, 2))
+plot(m3)
+par(mfrow = c(1, 1)) # return
 
-#library(car)
-Anova(glm2)
-Anova(glm3) 
-Anova(glm4) 
+s <- shapiro.test(m3$residuals)
+s
+## THIS IS NORMAL :)
 
-##################################
-#We found no measureable VOR and no variation at 4.0 d (Fig. 5). A weak reflex first appeared in some clutches at 4.25 d, but the amplitude of VOR was not significantly greater than 6 hours prior (Tukey test, P = 0.38525, Fig. 5). VOR increased significantly with development at each subsequent interval (4.5 d, 4.75 d, and 5.75 d; Tukey post-hoc tests, all P < 0.001, Fig. 5). 
-SubsetSibshipsSonia.df$Time<-as.factor(SubsetSibshipsSonia.df$Time)
-lm3<-lm(AmpNoCutoff ~ Time, data=SubsetSibshipsSonia.df)
+# tukey from 4.25 d and up. (exclude 4d) --> so normally distributed. 
+No4dSubsetSibshipsSonia.df$Time<-as.factor(No4dSubsetSibshipsSonia.df$Time)
+lm3<-lm(AmpNoCutoff ~ Time, data=No4dSubsetSibshipsSonia.df)
 lm4<-glht(lm3, linfct=mcp(Time="Tukey"))
 summary(lm4)
 cld(lm4) 
@@ -795,64 +687,12 @@ sibs <- data.frame(Test = c(4.25, 4.50, 4.75, 5.75),
                    Mean = c(mean(B$AmpNoCutoff), mean(C$AmpNoCutoff), mean(D$AmpNoCutoff), mean(E$AmpNoCutoff)),
                    CV =   c(sd(B$AmpNoCutoff)/mean(B$AmpNoCutoff), sd(C$AmpNoCutoff)/mean(C$AmpNoCutoff), sd(D$AmpNoCutoff)/mean(D$AmpNoCutoff),  sd(E$AmpNoCutoff)/mean(E$AmpNoCutoff)),
                    N =    c(length(B$AmpNoCutoff), length(C$AmpNoCutoff), length(D$AmpNoCutoff), length(E$AmpNoCutoff)))
-            
 sibs$SD <- with(sibs, CV * Mean)
-                   
-# ggplot(sibs,
-#        aes(Test,
-#            Mean)) +
-#   # points to show mean values
-#   geom_point(size = 4) +
-#   # lines to show standard deviations
-#   geom_linerange(aes(ymin = Mean - SD,
-#                      ymax = Mean + SD)) +
-#   theme_bw()
-# 
-# 
-# Sibships_asymptotic_test2 <- 
-#   asymptotic_test2(k = nrow(sibs), 
-#                    n = sibs$N, 
-#                    s = sibs$SD, 
-#                    x = sibs$Mean)
 
-Sibships_mlrt_test2 <-
   mslr_test2(nr = 1e4, 
              n = sibs$N, 
              s = sibs$SD, 
              x = sibs$Mean)
-
-
-# ####################### compare variation at 4.25d vs. 4.50 and 4.75 d 
-# 
-# sibs <- data.frame(Test = c(4.25, 4.50, 4.75),
-#                    Mean = c(mean(B$AverageAmp), mean(C$AverageAmp), mean(D$AverageAmp)),
-#                    CV =   c(sd(B$AverageAmp)/mean(B$AverageAmp), sd(C$AverageAmp)/mean(C$AverageAmp), sd(D$AverageAmp)/mean(D$AverageAmp)),
-#                    N =    c(length(B$AverageAmp), length(C$AverageAmp), length(D$AverageAmp)))
-# 
-# sibs$SD <- with(sibs, CV * Mean)
-# 
-# ggplot(sibs,
-#        aes(Test,
-#            Mean)) +
-#   # points to show mean values
-#   geom_point(size = 4) +
-#   # lines to show standard deviations
-#   geom_linerange(aes(ymin = Mean - SD,
-#                      ymax = Mean + SD)) +
-#   theme_bw()
-# 
-# 
-# Sibships_asymptotic_test2 <- 
-#   asymptotic_test2(k = nrow(sibs), 
-#                    n = sibs$N, 
-#                    s = sibs$SD, 
-#                    x = sibs$Mean)
-# 
-# Sibships_mlrt_test2 <-
-#   mslr_test2(nr = 1e4, 
-#              n = sibs$N, 
-#              s = sibs$SD, 
-#              x = sibs$Mean)
 
 ####################### compare variation at 4.25 vs. 4.50 d  (REPORTED)
 #but it was not different between 4.25 and 4.50 d (Modified signed-likelihood ratio test, test statistic = 2.300388, P=0.1293417; Fig. 5). 
@@ -863,112 +703,51 @@ sibs <- data.frame(Test = c(4.25, 4.50),
 
 sibs$SD <- with(sibs, CV * Mean)
 
-# ggplot(sibs,
-#        aes(Test,
-#            Mean)) +
-#   # points to show mean values
-#   geom_point(size = 4) +
-#   # lines to show standard deviations
-#   geom_linerange(aes(ymin = Mean - SD,
-#                      ymax = Mean + SD)) +
-#   theme_bw()
-
-# 
-# Sibships_asymptotic_test2 <- 
-#   asymptotic_test2(k = nrow(sibs), 
-#                    n = sibs$N, 
-#                    s = sibs$SD, 
-#                    x = sibs$Mean)
-
-Sibships_mlrt_test2 <-
   mslr_test2(nr = 1e4, 
              n = sibs$N, 
              s = sibs$SD, 
              x = sibs$Mean)
 
-# ####################### compare variation at 4.50 vs. 4.75 d 
-# sibs <- data.frame(Test = c(4.50, 4.75),
-#                    Mean = c(mean(C$AverageAmp), mean(D$AverageAmp)),
-#                    CV =   c(sd(C$AverageAmp)/mean(C$AverageAmp), sd(D$AverageAmp)/mean(D$AverageAmp)),
-#                    N =    c(length(C$AverageAmp), length(D$AverageAmp)))
-# 
-# sibs$SD <- with(sibs, CV * Mean)
-# 
-# ggplot(sibs,
-#        aes(Test,
-#            Mean)) +
-#   # points to show mean values
-#   geom_point(size = 4) +
-#   # lines to show standard deviations
-#   geom_linerange(aes(ymin = Mean - SD,
-#                      ymax = Mean + SD)) +
-#   theme_bw()
-# 
-# 
-# Sibships_asymptotic_test2 <- 
-#   asymptotic_test2(k = nrow(sibs), 
-#                    n = sibs$N, 
-#                    s = sibs$SD, 
-#                    x = sibs$Mean)
-# 
-# Sibships_mlrt_test2 <-
-#   mslr_test2(nr = 1e4, 
-#              n = sibs$N, 
-#              s = sibs$SD, 
-#              x = sibs$Mean)
-
-
-
 ### test for clutch caused variation
 #Moreover, much of the variation in VOR of age 4.25 and 4.50 d individuals was structured among clutches. 
 
-hist(SubsetSibshipsSonia.df$AmpNoCutoff, breaks=100) #non-normal
-hist(log(SubsetSibshipsSonia.df$AmpNoCutoff))#still not normal
-shapiro.test(SubsetSibshipsSonia.df$AmpNoCutoff) #not normal
-# P<0.05, therefore not normal so use non-parametric test
+###### test for age, clutch, age x clutch effects ###
 
-kruskal.test(AmpNoCutoff ~ Clutch, data= SubsetSibshipsSonia.df)
-# no clutch effect for all ages
-kruskal.test(AmpNoCutoff ~ Time, data= SubsetSibshipsSonia.df)
-# yes time/age effect for all ages
+mod1 <- lm(AmpNoCutoff ~ Time * Clutch, data=No4dSubsetSibshipsSonia.df)
+lowerSubsetSibshipsSonia.df<- subset(SibshipsSonia.df, Time ==4.25 | Time == 4.5)
+upperSubsetSibshipsSonia.df<- subset(SibshipsSonia.df, Time ==4.75 | Time ==5.75)
+mod2 <- lm(AmpNoCutoff ~ Time * Clutch, data=lowerSubsetSibshipsSonia.df)
+mod3 <- lm(AmpNoCutoff ~ Time * Clutch, data=upperSubsetSibshipsSonia.df)
 
-cor.test(SubsetSibshipsSonia.df$AmpNoCutoff, SubsetSibshipsSonia.df$Clutch, method="pearson")
-#r=0.141002 
-cor(SubsetSibshipsSonia.df$AmpNoCutoff, SubsetSibshipsSonia.df$Clutch)
-0.141002*0.141002
-#The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.009097837.
-
-
-greatest.variability <- subset(SubsetSibshipsSonia.df, SubsetSibshipsSonia.df$Time==4.25|SibshipsSonia.df$Time==4.5)
-kruskal.test(AmpNoCutoff ~ Clutch, data= greatest.variability)
-# no clutch effect for age 4.25 an 4.5
-kruskal.test(AmpNoCutoff ~ Time, data= greatest.variability)
-# yes time/age effect for ages 4.25 and 4.5
-
-cor.test(greatest.variability$AmpNoCutoff, greatest.variability$Clutch, method="pearson")
-#r=0.2192349 
-0.2192349 * 0.2192349 
-#The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.367459. 
+Anova(mod1)
+Anova(mod2) ###
+Anova(mod3) ###
 
 
 four.twofive <- subset(SubsetSibshipsSonia.df, SubsetSibshipsSonia.df$Time==4.25)
-kruskal.test(AmpNoCutoff ~ Clutch, data= four.twofive)
+mod1 <- lm(AmpNoCutoff ~ Clutch, data=four.twofive)
+Anova(mod1)
 # no clutch effect for age 4.25 
 cor.test(four.twofive$AmpNoCutoff, four.twofive$Clutch, method="pearson")
 #r=0.4388727  
 0.4388727   * 0.4388727  
 #The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.1926092 
 
-
 four.five<- subset(SubsetSibshipsSonia.df, SubsetSibshipsSonia.df$Time==4.5)
-kruskal.test(AmpNoCutoff ~ Clutch, data= four.five)
+mod1 <- lm(AmpNoCutoff ~ Clutch, data=four.five)
+Anova(mod1)
 # no clutch effect for age 4.5
 cor.test(four.five$AmpNoCutoff, four.five$Clutch, method="pearson")
-#r=0.9255137 
+#r=0.8119575
 0.8119575    * 0.8119575   
-#The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.8565756.  
+#The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.659275.  
 
 
+cor.test(SubsetSibshipsSonia.df$AmpNoCutoff, SubsetSibshipsSonia.df$Clutch, method="pearson")
+#r=0.141002 
+cor(SubsetSibshipsSonia.df$AmpNoCutoff, SubsetSibshipsSonia.df$Clutch)
+0.141002*0.141002
+#The fraction of the variance in VOR that is “explained” by clutch is r2 = 0.01988156.
 
 ###################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################
@@ -981,13 +760,34 @@ cor.test(four.five$AmpNoCutoff, four.five$Clutch, method="pearson")
 
 #ShakeN'RollV1-Kwork.xlsx is the final excel file
 
-ShakeRoll.df<-read.csv(file="ShakeRoll.csv")
-
+ShakeRoll.df<-read.csv(file="ShakeRoll.csv", header=TRUE, stringsAsFactors=TRUE)
+str(ShakeRoll.df)
 #ShakeRoll.df$HorNH<-as.numeric(as.character(ShakeRoll.df$HorNH))
 #ShakeRoll.df$SUM.of.trait.values<-as.numeric(as.character(ShakeRoll.df$SUM.of.trait.values))
 ShakeRoll.df$HorNH<-as.factor(ShakeRoll.df$HorNH)
 ShakeRoll.df$SUM.of.trait.values<-as.factor(ShakeRoll.df$SUM.of.trait.values)
 
+
+##### plot the residuals 
+m3<-lm(data=ShakeRoll.df, AverageAmp~SUM.of.trait.values)
+str(ShakeRoll.df$SUM.of.trait.values)
+str(m3$residuals)
+
+plot(x=ShakeRoll.df$SUM.of.trait.values, y=m3$residuals)
+#or
+e<-resid(m3)
+plot(x=ShakeRoll.df$SUM.of.trait.values, y=e)
+hist(e, xlim = c(-4 * sd(e), 4 * sd(e)), breaks = 20, main = "Histogram of Residuals")
+
+plot(m3$model$SUM.of.trait.values, m3$residuals)
+
+par(mfrow = c(2, 2))
+plot(m3)
+par(mfrow = c(1, 1)) # return
+
+s <- shapiro.test(m3$residuals)
+s
+## THIS IS NORMAL :) 
 
 str(ShakeRoll.df)
 min(ShakeRoll.df$SUM.of.trait.values)
@@ -1023,7 +823,8 @@ stage7 <- subset(ShakeRoll.df, ShakeRoll.df$SUM.of.trait.values==7)
 stage7.NH <- subset(stage7, stage7$HorNH==0)
 stage7.H <- subset(stage7, stage7$HorNH==1)
 
-younger <- subset(ShakeRoll.df, ShakeRoll.df$SUM.of.trait.values<5)
+str(ShakeRoll.df)
+younger <- subset(ShakeRoll.df, as.numeric(ShakeRoll.df$SUM.of.trait.values)<5)
 length(younger$AverageAmp) #N=18
 sum(younger$PropH) #none hatched
 mean(younger$AverageAmp) #average VOR was 2.028089
@@ -1043,21 +844,19 @@ se(younger$AverageAmp)
 #   xlab("\n Developmental stage")
 
 #TUKEY
+library(dplyr)
 
-# lm6<-lm(PropH~SUM.of.trait.values, data=ShakeRoll.df)
-# sixph1<-glht(lm6, linfct=mcp(SUM.of.trait.values="Tukey"))
-# cld(sixph1) 
-# # 
-# ShakeRoll.df$RoundAmp<-as.factor(ShakeRoll.df$RoundAmp)
-# lm6<-lm(PropH~SUM.of.trait.values, data=ShakeRoll.df)
-# sixph1<-glht(lm6, linfct=mcp(SUM.of.trait.values="Tukey"))
-# cld(sixph1) 
+means <- summarise (group_by(ShakeRoll.df, SUM.of.trait.values), mean (AverageAmp))
+sds <-summarise (group_by(ShakeRoll.df, SUM.of.trait.values), sd(AverageAmp))
+# max(sds$`sd(AverageAmp)`)/min(sds$`sd(AverageAmp)`)  # check that variances are roughly equal (ratio of max/min is <2)
 
-# mod1<-aov(PropH~SUM.of.trait.values, data=ShakeRoll.df)
-# TukeyHSD(mod1, "SUM.of.trait.values")
-# 
-# mod2<-aov(AverageAmp~SUM.of.trait.values, data=ShakeRoll.df)
-# TukeyHSD(mod2, "SUM.of.trait.values")
+m <- aov(ShakeRoll.df$AverageAmp ~ ShakeRoll.df$SUM.of.trait.values)
+posthoc <- TukeyHSD(m, "ShakeRoll.df$SUM.of.trait.values", conf.level = 0.95)
+posthoc  ############ important
+
+m <- aov(ShakeRoll.df$PropH ~ ShakeRoll.df$SUM.of.trait.values)
+posthoc <- TukeyHSD(m, "ShakeRoll.df$SUM.of.trait.values", conf.level = 0.95)
+posthoc  ############ important
 
 
 # 2 boxplots for figure
@@ -1072,6 +871,21 @@ ggplot(ShakeRoll.df, aes(x=as.factor(SUM.of.trait.values), y=PropH, color = HorN
 plot<-ggplot(ShakeRoll.df, aes(x=as.factor(SUM.of.trait.values), y=AverageAmp, color = HorNH)) + 
   geom_boxplot(data=ShakeRoll.df, size=1) +
   ylab("VOR amplitude (°)\n")+
+  theme_bw(20) +
+  xlab("\n Developmental stage")
+
+####################### SCATTER BY POINT, BY CLUTCH: 
+## For Prop H – plot 38 data points – take an avg by clutch. → make into a scatter plot. 
+## PROPH x stage with each clutch in there once. 
+str(ShakeRoll.df)
+attach(ShakeRoll.df)
+ShakeRoll.df$SUM.of.trait.values<-as.numeric(as.character(ShakeRoll.df$SUM.of.trait.values))
+byclutch<-aggregate(ShakeRoll.df, by=list(Clutch, SUM.of.trait.values), FUN=mean, na.omit=T)
+
+ggplot(byclutch, aes(x=as.factor(SUM.of.trait.values), y=PropH)) + 
+  geom_boxplot(data=byclutch, size=1) +
+  geom_point(data=byclutch, size=3) +
+  ylab("Proportion of clutch hatched\n")+
   theme_bw(20) +
   xlab("\n Developmental stage")
 
@@ -1165,6 +979,26 @@ propH_mlrt_test <-
                  PropH, 
                  SUM.of.trait.values))
 
+
+
+
+library(dplyr)
+means <- summarise(group_by(SibshipsSonia.df, Time, Clutch), mean(AmpNoCutoff))  # first we calculate averages by combination of factors
+means
+
+sds <- summarise(group_by(SibshipsSonia.df, Time, Clutch), sd(AmpNoCutoff))  # first we calculate averages by combination of factors
+sds
+
+max(sds$`sd(AmpNoCutoff)`)/min(sds$`sd(AmpNoCutoff)`)  # check that variances in each group are roughly equal (ratio of max/min is <2)
+
+p <- ggplot(data = SibshipsSonia.df, aes(y = AmpNoCutoff, x = sex)) + geom_boxplot() + facet_wrap(~age, 
+                                                                                                  ncol = 4)  # and let's plot what the data look like
+# p <- p + geom_point() # uncommenting this shows all points
+p <- p + stat_summary(fun.y = mean, colour = "darkgreen", geom = "point", shape = 8, 
+                      size = 6)
+p
+
+
 # # Does hatching inc with vestibular function?
 # cor.test(ShakeRoll.df$AverageAmp, ShakeRoll.df$PropH, method="pearson")
 # 
@@ -1239,6 +1073,24 @@ sum(as.numeric(as.character(highVOR$HorNH)))
 81/148
 67/148
 
+## ** take out <6degrees and see if there’s a correlation between propH and VOR
+## ** also add a line for H vs. NH – are they different?
+
+cor.test(highVOR$AverageAmp, highVOR$PropH, method="pearson")
+
+
+ggplot(ShakeRoll.df, aes(x=AverageAmp, y=PropH, shape=HorNH)) + 
+  geom_point(data=Hat, shape = 21, size=3) +
+  geom_smooth(data=Hat, method = "lm", se=FALSE, color="Black", linetype="dashed") +
+  geom_point(data=NoHat, shape= 16, size=3) +
+  geom_smooth(data=NoHat, method = "lm", se=FALSE, color="Black", linetype="solid") +
+  #scale_shape_manual(values = c(16, 21)) +
+  theme_bw(20)+
+  #theme (panel.grid.major.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank())+
+  #geom_errorbar(data = SibshipsSonia.df, aes(ymin=AverageAmp-SE, ymax=AverageAmp+SE), width = 0.05, colour = Clutch)+  
+  ylab("Proportion of clutch hatched\n") +  
+  xlab("VOR amplitude (°)\n")
+
 ###################################################################################################################################################################################################################################################################################
 ###################################################################################################################################################################################################################################################################################
 ###############                                                ####################################################################################################################################################################################################################
@@ -1257,15 +1109,32 @@ hist(log(tactile$Average.Amplitude)) #log distribution is normal-ish
 shapiro.test(log(tactile$Average.Amplitude)) #not normal
 # P<0.05, therefore not normal so use non-parametric test (like JT test)
 
-jonckheere.test(as.numeric(tactile$Average.Amplitude), as.numeric(tactile$Age.Block), nperm=1000, alternative="increasing")
-jonckheere.test(as.numeric(tactile$Average.Amplitude), as.numeric(tactile$Developmental.Stage), nperm=1000, alternative="increasing")
+##### plot the residuals 
+m4<-lm(data=tactile, Average.Amplitude~Developmental.Stage)
+str(tactile$Developmental.Stage)
+str(m4$residuals)
+
+plot(x=tactile$Developmental.Stage, y=m4$residuals)
+#or
+e<-resid(m4)
+plot(x=tactile$Developmental.Stage, y=e)
+hist(e, xlim = c(-4 * sd(e), 4 * sd(e)), breaks = 20, main = "Histogram of Residuals")
+
+plot(m4$model$Developmental.Stage, m4$residuals)
+
+par(mfrow = c(2, 2))
+plot(m4)
+par(mfrow = c(1, 1)) # return
+
+s <- shapiro.test(m4$residuals)
+s
+## THIS IS NORMAL :) YAY JUST BARELY. 
 
 cor.test(as.numeric(tactile$Average.Amplitude), as.numeric(tactile$Age.Block), method="pearson")
 cor.test(as.numeric(tactile$Average.Amplitude), as.numeric(tactile$Developmental.Stage), method="pearson")
 
 
 ### TAKE OUT AGE AND ADD FAMILY    non-gaussian. look at residuals -- , 
-# 
 
 glm1 <- glm(Average.Amplitude ~ Age.Block, data=tactile)
 glm2 <- glm(Average.Amplitude ~ Developmental.Stage, data=tactile)
@@ -1411,8 +1280,6 @@ lm2<-glht(lm1, linfct=mcp(Response ="Tukey"))
 summary(lm2)
 cld(lm2) 
 
-
-
 hat <- subset(tactile, Response == "1") #61
 nohat <- subset(tactile, Response == "0") #51
 
@@ -1481,11 +1348,6 @@ cor.test(tactile$Average.Amplitude, tactile$Latency.to.Hatch.in.Minutes, method=
 cor.test(tactile$Developmental.Stage, tactile$Latency.to.Hatch.in.Minutes, method="pearson")
 
 ### start here
-
-
-
-
-
 
 
 glm1 <- glm(Response ~ Developmental.Stage, data=tactile)
@@ -1629,7 +1491,6 @@ ggplot(tactile, aes(x=Hours.Since.First.Hatch, y=Average.Amplitude, colour=Devel
 
 ############ ANOVA Stats ###############
 hist(tactile$Average.Amplitude)
-hist()
 
 m_1 <- aov(Average.Amplitude ~ 1, data=tactile)
 m_2 <-aov(Average.Amplitude ~ Response, data = tactile)
