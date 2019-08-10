@@ -1,0 +1,1592 @@
+---
+title: "VOR ms markdown"
+author: "Julie Jung"
+date: "February 26, 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+NOTE TO SELF: THIS IS THE LATEST/BEST VERSION OF VOR ANALYSIS. 
+
+```{r setup, include=FALSE}
+rm(list=ls()) #clear environment
+setwd('/Users/juliejung/Documents/GitHub/VOR-ms') 
+```
+
+## install and load packages
+
+```{r}
+library(xlsx);library(clinfun);library(car)
+library(MASS);library(multcomp);library(pscl);library(psych);library(lme4)
+library("stargazer");library("knitr");library("dplyr")
+library(sciplot);library(ggplot2);library(ggrepel); library(extrafont); library(ggthemes);library(reshape);library(grid);
+library(scales);library(RColorBrewer);library(gridExtra);library(cowplot)
+```
+
+Colors
+```{r}
+stagecolors <- c("black", "brown2", "orange1", "sienna4", "limegreen", "forestgreen")
+#2     none
+#3    1      medium
+#4     1     lots
+#5     1     lots
+#6    lots      lots
+#7    lots      medium     
+#8    lots     none
+clutchcolors<- c("cyan1", "cadetblue2",  "dodgerblue1", "blue2", "navyblue")
+
+
+#library(RColorBrewer)
+#stagecolors <- brewer.pal("Dark2", n=6)
+#clutchcolors<- c("red", "blue", "green", "purple", "orange")
+#clutchgrays<- brewer.pal("Greys", n=9)
+```
+
+## Daily developmental series
+
+```{r} 
+Daily.df<-read.xlsx("Daily_20180701.xls", sheetName="Daily")
+#str(Daily.df) #note this includes the two 7d indivs
+```
+Subset out the 2 individuals at 7 days
+```{r}
+Daily.df <- subset(Daily.df, Daily.df$Age<7)
+str(Daily.df) # now only ages 3 - 6 days
+
+corrected <- subset(Daily.df, Daily.df$CorrectedAvg==0) #4/36 indivs where corrected/put as 0
+```
+
+```{r}
+# THE MAKING OF THE FIGURE(S):
+c8 <- subset(Daily.df, Clutch == "C8")
+c9 <- subset(Daily.df, Clutch == "C9")
+c10 <- subset(Daily.df, Clutch == "C10")
+c11 <- subset(Daily.df, Clutch == "C11")
+c12 <- subset(Daily.df, Clutch == "C12")
+c13 <- subset(Daily.df, Clutch == "C13")
+c14 <- subset(Daily.df, Clutch == "C14")
+c15 <- subset(Daily.df, Clutch == "C15")
+c16 <- subset(Daily.df, Clutch == "C16")
+c17 <- subset(Daily.df, Clutch == "C17")
+c19 <- subset(Daily.df, Clutch == "C19")
+c20 <- subset(Daily.df, Clutch == "C20")
+c22 <- subset(Daily.df, Clutch == "C22")
+c23 <- subset(Daily.df, Clutch == "C23")
+
+sum(Daily.df$Age==3) #7
+sum(Daily.df$Age==4)#10
+sum(Daily.df$Age==5) #10
+sum(Daily.df$Age==6) #9
+sum(Daily.df$Age==7) #0
+
+mean(Daily.df$Age) #
+```
+
+```{r}
+
+# DATA COLORED BY STAGE
+stage2 <- subset(Daily.df, StageAge == 2)
+stage3 <- subset(Daily.df, StageAge == 3)
+stage4 <- subset(Daily.df, StageAge == 4)
+stage5 <- subset(Daily.df, StageAge == 5)
+stage6 <- subset(Daily.df, StageAge == 6)
+stage7 <- subset(Daily.df, StageAge == 7)
+stage8 <- subset(Daily.df, StageAge == 8)
+stage9 <- subset(Daily.df, StageAge == 9)
+
+Daily_plot<- ggplot(Daily.df, aes(x=Age, y=CorrectedAvg, group=as.factor(as.character(Age)))) +
+  geom_boxplot(data=Daily.df, size=1) +
+  geom_point(data=stage3, aes(colour=colpalette[1]), size=3) +
+  geom_point(data=stage4, aes(colour=colpalette[2]), size=3) +
+  geom_point(data=stage5, aes(colour=colpalette[3]), size=3) +
+  geom_point(data=stage6, aes(colour=colpalette[4]), size=3) +
+  geom_point(data=stage7, aes(colour=colpalette[5]), size=3) +
+  geom_point(data=stage8, aes(colour=colpalette[6]), size=3) +
+  my_theme() +
+  scale_color_identity(name="Stage", 
+                       breaks=c(colpalette[1], colpalette[2], colpalette[3], colpalette[4], colpalette[5], colpalette[6]), 
+                       labels=c(3, 4, 5, 6, 7, 8), 
+                       guide="legend") +
+  scale_x_continuous(breaks = c(3, 4, 5, 6))+
+  labs(y = "VOR amplitude (°)\n") +
+  theme(axis.title.x=element_blank()) +
+  theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
+  theme(legend.background = element_rect(fill="lightgray",
+                                  size=0.4, linetype="solid", 
+                                  colour ="black")) + 
+  annotate("text",x=3,y=15,label="a", size=7)+
+  annotate("text",x=4,y=35,label="b", size=7)+
+  annotate("text",x=5,y=33,label="b", size=7)+
+  annotate("text",x=6,y=40,label="b", size=7)
+
+```
+
+
+
+For the rest of the Daily analysis, see JMP files: "DailyJmpAnalysis"
+![screencap of the Daily Analysis in JMP](/Users/juliejung/Documents/GitHub/VOR-ms/DailyJmpAnalysisScreencap.png)
+
+## Sibships developmental series
+
+```{r}
+SibshipsSonia.df<-read.xlsx("Sibships_20190109.xlsx", sheetName="Sibships")
+str(SibshipsSonia.df)
+
+sibship_stuff<-
+  SibshipsSonia.df %>%
+  group_by(Age) %>%
+  summarize(count = n(),
+            mean = mean(CorrectedAvg),
+            SD = sd(CorrectedAvg), 
+            SE = sd(CorrectedAvg)/sqrt(n())
+            )
+#indivsperclutch$AgeGroup <- 5.2
+kable(sibship_stuff,title="Mean & SD & SE",digits=4)
+```
+
+incorporate clutch as a random effect
+```{r}
+results0 <- lmer(CorrectedAvg ~ Age + (1|Clutch), data = SibshipsSonia.df)
+summary(results0)
+```
+
+According to Justin (at STRI workshop): With mixed effects models, you can use the Anova() function from the car package to calculate summary statistics, but it is not advised by the R gurus. 
+
+```{r}
+Anova(results0)
+```
+According to the above analysis, age has a significant effect on VOR. 
+
+Instead, you should use Likelihood Ratio Tests (LRT) to compare nested models.
+
+Better way: 
+
+```{r}
+lm0 <- lm(CorrectedAvg ~ 1, data=SibshipsSonia.df)
+mixed0 <- lmer(CorrectedAvg ~ 1 + (1|Clutch), data=SibshipsSonia.df)
+
+summary(mixed0)
+AIC(lm0)
+AIC(mixed0)
+
+str(SibshipsSonia.df)
+
+results0 <- lmer(CorrectedAvg ~ 1 + (1|Clutch), data = SibshipsSonia.df)
+results1 <- lmer(CorrectedAvg ~ Age + (1|Clutch), data=SibshipsSonia.df)
+
+#anova(lm0, mixed0)
+anova(results0,results1)
+```
+Note that because of the heirarchical nature of mixed effects models, it is impossible to accurately know the degrees of freedom. Thus, you simply do not report them.
+
+HERE WE LOOK FOR CLUTCH x AGE INTERACTIONS: (none)
+
+```{r}
+model1 <- glm(CorrectedAvg ~ 1, data=SibshipsSonia.df)
+model2 <- glm(CorrectedAvg ~ Age, data=SibshipsSonia.df)
+model3 <- glm(CorrectedAvg ~ Clutch, data=SibshipsSonia.df)
+model4 <- glm(CorrectedAvg ~ Age + Clutch, data = SibshipsSonia.df)
+model5 <- glm(CorrectedAvg ~ Age * Clutch, data=SibshipsSonia.df)
+model6 <- lmer(CorrectedAvg ~ Age + Clutch + (1|Clutch), data=SibshipsSonia.df)
+model7 <- lmer(CorrectedAvg ~ Age * Clutch + (1|Clutch), data=SibshipsSonia.df)
+
+Anova(model5)
+Anova(model7)
+anova(model6, model7)
+```
+Note that because of the heirarchical nature of mixed effects models, it is impossible to accurately know the degrees of freedom. Thus, you simply do not report them.
+
+
+
+We can use LRT’s to calculate p-values for all of our predictors.
+
+```{r}
+qqnorm(resid(results1)); qqline (resid(results1))
+```
+
+```{r}
+plot(fitted(results1), residuals(results1),
+    xlab='Fitted Values', ylab='Residuals')
+    abline(h=0, lty=2)
+    lines(smooth.spline(fitted(results1), residuals(results1)))
+```
+
+Now we can also look at hatching state (just yes H or no H)
+```{r}
+results2 <- lmer(AverageAmp ~ HorNH + (1|Clutch), data=ClutchesWHatching)
+summary(results2)
+# Anova(results2) #do likelihood ratio tests instead
+```
+
+
+```{r}
+anova(results0,results2)
+```
+
+Graph the sibs data
+
+```{r}
+#subset only ages 3.75-5.75
+SubsetSibshipsSonia.df<- subset(SibshipsSonia.df, Age ==3.75 | Age ==4 | Age ==4.25 | Age == 4.5| Age ==4.75| Age ==5.75, na.rm=T)
+str(SubsetSibshipsSonia.df)
+
+correctedSibs <- subset(SubsetSibshipsSonia.df, SubsetSibshipsSonia.df$CorrectedAvg==0)
+```
+
+```{r}
+c101<- subset(SubsetSibshipsSonia.df, Clutch ==101, na.rm=T)
+c102<- subset(SubsetSibshipsSonia.df, Clutch ==102, na.rm=T)
+c104<- subset(SubsetSibshipsSonia.df, Clutch ==104, na.rm=T)
+c105<- subset(SubsetSibshipsSonia.df, Clutch ==105, na.rm=T)
+c106<- subset(SubsetSibshipsSonia.df, Clutch ==106, na.rm=T)
+
+str(SubsetSibshipsSonia.df)
+
+clutchcolors<- brewer.pal("Set1", n=5)
+
+Sibs_plot<- ggplot(SubsetSibshipsSonia.df, aes(x=Age, y=CorrectedAvg, group=Clutch)) +
+  geom_point(data=c101, colour=clutchcolors[1], size=3) +
+  geom_smooth(data=c101, method = "lm", formula = y ~ poly(x, 2),  se=FALSE, aes(color=clutchcolors[1])) +
+  geom_point(data=c102, colour=clutchcolors[2], size=3) +
+  geom_smooth(data=c102, method = "lm", formula = y ~ poly(x, 2),  se=FALSE, aes(color=clutchcolors[2])) +
+  geom_point(data=c104, colour=clutchcolors[3], size=3) +
+  geom_smooth(data=c104, method = "lm", formula = y ~ poly(x, 2),  se=FALSE, aes(color=clutchcolors[3])) +
+  geom_point(data=c105, colour=clutchcolors[4], size=3) +
+  geom_smooth(data=c105, method = "lm", formula = y ~ poly(x, 2),  se=FALSE, aes(color=clutchcolors[4])) +
+  geom_point(data=c106, colour=clutchcolors[5], size=3) +
+  geom_smooth(data=c106, method = "lm", formula = y ~ poly(x, 2),  se=FALSE, aes(color=clutchcolors[5])) +
+  scale_color_identity(name="Clutch", 
+                       breaks=c(clutchcolors[1], clutchcolors[2], clutchcolors[3], clutchcolors[4], clutchcolors[5]), 
+                       labels=c(101, 102, 104, 105, 106), 
+                       guide="legend") +
+  labs(x = "\nDevelopmental age (days)", 
+       y = "VOR amplitude (°)\n") +
+  theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
+  theme(legend.background = element_rect(fill="lightgray",
+                                  size=0.5, linetype="solid", 
+                                  colour ="black")) + 
+  scale_x_continuous(breaks = c(4, 4.5, 5, 5.5))+
+  scale_y_continuous(breaks = c(0, 10, 20, 30, 40, 50))+
+  annotate("text",x=3.75,y=7,label="a", size=7)+
+  annotate("text",x=4,y=13,label="a", size=7)+
+  annotate("text",x=4.25,y=30,label="b", size=7)+
+  annotate("text",x=4.5,y=45,label="c", size=7)+
+  annotate("text",x=4.75,y=15,label="d", size=7)+
+  annotate("text",x=5.75,y=7,label="d", size=7)
+```
+
+try nplr package
+```{r}
+library(nplr)
+```
+
+fitting a model: 
+```{r}
+np1 <- nplr(x=SubsetSibshipsSonia.df$Age, y=scale(SubsetSibshipsSonia.df$CorrectedAvg))
+
+```
+
+```{r}
+# DATA COLORED BY STAGE
+stage2 <- subset(SubsetSibshipsSonia.df, STAGE == 2, na.rm=T)
+stage3 <- subset(SubsetSibshipsSonia.df, STAGE == 3, na.rm=T)
+stage4 <- subset(SubsetSibshipsSonia.df, STAGE == 4, na.rm=T)
+stage5 <- subset(SubsetSibshipsSonia.df, STAGE == 5, na.rm=T)
+stage6 <- subset(SubsetSibshipsSonia.df, STAGE == 6, na.rm=T)
+stage7 <- subset(SubsetSibshipsSonia.df, STAGE == 7, na.rm=T)
+
+ggplot(SubsetSibshipsSonia.df, aes(x=Age, y=CorrectedAvg, group=Age)) +
+  geom_boxplot(data=SubsetSibshipsSonia.df, size=1) +
+  geom_point(data=stage3, colour=colour[1], size=3) +
+  geom_point(data=stage4, colour=colour[2], size=3) +
+  geom_point(data=stage5, colour=colour[3], size=3) +
+  geom_point(data=stage6, colour=colour[4], size=3) +
+  geom_point(data=stage7, colour=colour[5], size=3) +
+  geom_point(data=stage8, colour=colour[6], size=3) +
+  my_theme() +
+  labs(x = "\nDevelopmental age (days)", 
+       y = "VOR amplitude (°)\n")
+
+# PERHAPS I SHOULD MAKE A PLOT NOT COLORED BY STAGE
+ggplot(SubsetSibshipsSonia.df, aes(x=Age, y=CorrectedAvg, group=Age)) +
+  geom_boxplot(data=SubsetSibshipsSonia.df, size=1) +
+  geom_point(data=SubsetSibshipsSonia.df, size=3)+
+  my_theme() +
+  labs(x = "\nDevelopmental age (days)", 
+       y = "VOR amplitude (°)\n")
+```
+For pairwise comparisons, see Jmp analysis.
+
+## Fig4
+
+Plot part A of figure: 
+
+```{r}
+plot.daily <- ggplot(Daily.df, aes(x=Age, y=CorrectedAvg, group=as.factor(as.character(Age)))) +
+  geom_boxplot(data=Daily.df, size=1) +
+  geom_point(data=stage3, aes(colour=stagecolors[1]), size=3) +
+  geom_point(data=stage4, aes(colour=stagecolors[2]), size=3) +
+  geom_point(data=stage5, aes(colour=stagecolors[3]), size=3) +
+  geom_point(data=stage6, aes(colour=stagecolors[4]), size=3) +
+  geom_point(data=stage7, aes(colour=stagecolors[5]), size=3) +
+  geom_point(data=stage8, aes(colour=stagecolors[6]), size=3) +
+  theme_cowplot(font_size = 14, line_size = 1) +
+  scale_color_identity(name="Stage", 
+                       breaks=c(stagecolors[1], stagecolors[2], stagecolors[3], stagecolors[4], stagecolors[5], stagecolors[6]), 
+                       labels=c(3, 4, 5, 6, 7, 8), 
+                       guide="legend") +
+  scale_x_continuous(breaks = c(3, 4, 5, 6))+
+  labs(y = "VOR amplitude (°)\n") +
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_blank()) +
+  theme(axis.title.y=element_text(size=14, colour = "black")) +
+  theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
+  theme(legend.background = element_rect(fill="white",
+                                  size=0.4, linetype="solid", 
+                                  colour ="black")) + 
+  annotate("text",x=3,y=15,label="a", size=6)+
+  annotate("text",x=4,y=35,label="b", size=6)+
+  annotate("text",x=5,y=33,label="b", size=6)+
+  annotate("text",x=6,y=40,label="b", size=6)
+
+plot.daily
+```
+
+
+```{r}
+plot.daily <- ggplot(Daily.df, aes(x=Age, y=CorrectedAvg, group=as.factor(as.character(Age)))) +
+  geom_boxplot(data=Daily.df, aes(x=as.numeric(Age)-0.2), alpha = 1, size = 1, width = 0.25, outlier.shape=NA) +
+  geom_jitter(data=stage3, aes(x=as.numeric(Age)+0.2, colour=stagecolors[1]), size=3,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+  geom_jitter(data=stage4, aes(x=as.numeric(Age)+0.2, colour=stagecolors[2]), size=3, position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+  geom_jitter(data=stage5, aes(x=as.numeric(Age)+0.2, colour=stagecolors[3]), size=3, position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+  geom_jitter(data=stage6, aes(x=as.numeric(Age)+0.2, colour=stagecolors[4]), size=3,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+    geom_jitter(data=stage7, aes(x=as.numeric(Age)+0.2, colour=stagecolors[5]), size=3,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+    geom_jitter(data=stage8, aes(x=as.numeric(Age)+0.2, colour=stagecolors[6]), size=3,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+  theme_cowplot(font_size = 18, line_size = 1) +
+  scale_color_identity(name="Stage", 
+                       breaks=c(stagecolors[1], stagecolors[2], stagecolors[3], stagecolors[4], stagecolors[5], stagecolors[6]), 
+                       labels=c(3, 4, 5, 6, 7, 8), 
+                       guide="legend") +
+  scale_x_continuous(limits=c(2.5, 6.5), 
+                     breaks = c(3, 4, 5, 6), 
+                     labels=c("3", "4", "5", "6")) +
+  scale_y_continuous(limits=c(0,40), 
+                     breaks = c(0, 10, 20, 30, 40))+
+  labs(y = "VOR amplitude (°)\n") +
+  theme(axis.text.y=element_text(size=18, colour= "black")) +
+  theme(axis.text.x=element_text(size=18, colour= "black")) +
+  theme(axis.title.x=element_blank()) +
+  theme(axis.title.y=element_text(size=18, colour = "black")) +
+  theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
+  theme(legend.background = element_rect(fill="white",
+                                  size=0.75, linetype="solid", 
+                                  colour ="black")) + 
+  annotate("text",x=3,y=15,label="a", size=10)+
+  annotate("text",x=4,y=35,label="b", size=10)+
+  annotate("text",x=5,y=33,label="b", size=10)+
+  annotate("text",x=6,y=40,label="b", size=10)
+
+plot.daily
+```
+
+Plot part B of figure: 
+
+```{r}
+plot.sibs<- ggplot(SubsetSibshipsSonia.df, aes(x=Age, y=CorrectedAvg, colour=Clutch)) +
+  geom_point(data=c101, aes(x=as.numeric(Age), colour=clutchcolors[1]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c102, aes(x=as.numeric(Age), colour=clutchcolors[2]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c104, aes(x=as.numeric(Age), colour=clutchcolors[3]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c105, aes(x=as.numeric(Age), colour=clutchcolors[4]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c106, aes(x=as.numeric(Age), colour=clutchcolors[5]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
+  theme_cowplot(font_size = 18, line_size = 1) +
+  labs(x = "\nDevelopmental age (days)", 
+       y = "VOR amplitude (°)\n") +
+  scale_color_identity(name="Clutch", 
+                       breaks=c(clutchcolors[1], clutchcolors[2], clutchcolors[3], clutchcolors[4], clutchcolors[5]), 
+                       labels=c(101, 102, 104, 105, 106), 
+                       guide="legend") +
+  theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
+  theme(legend.background = element_rect(fill="white",
+                                         size=0.5, linetype="solid", 
+                                         colour ="black")) + 
+  scale_x_continuous(limits=c(3.75, 5.75), 
+                     breaks = c(4, 4.5, 5, 5.5), 
+                     labels=c("4", "4.5", "5", "5.5")) +
+  scale_y_continuous(limits=c(0,50), 
+                     breaks = c(0, 10, 20, 30, 40, 50))+
+  theme(axis.text.y=element_text(size=18, colour= "black")) +
+  theme(axis.text.x=element_text(size=18, colour= "black")) +
+  theme(axis.title.x=element_text(size=18, colour = "black")) +
+  theme(axis.title.y=element_text(size=18, colour = "black")) +
+  annotate("text",x=3.75,y=7,label="a", size=10)+
+  annotate("text",x=4,y=13,label="a", size=10)+
+  annotate("text",x=4.25,y=30,label="b", size=10)+
+  annotate("text",x=4.5,y=45,label="c", size=10)+
+  annotate("text",x=4.75,y=15,label="d", size=10)+
+  annotate("text",x=5.75,y=7,label="d", size=10)
+
+plot.sibs
+```
+
+```{r}
+plot.sibs<- ggplot(SubsetSibshipsSonia.df, aes(x=Age, y=CorrectedAvg, colour=Clutch)) +
+  geom_point(data=c101, colour="#FC0008", size=3) +
+  geom_point(data=c102, colour="#21FF05", size=3) +
+  geom_point(data=c104, colour="#0000FF", size=3) +
+  geom_point(data=c105, colour="#FC8008", size=3) +
+  geom_point(data=c106, colour="#800080", size=3) +
+  theme_cowplot(font_size = 18, line_size = 1) +
+  labs(x = "\nDevelopmental age (days)", 
+       y = "VOR amplitude (°)\n") +
+  theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
+  theme(legend.background = element_rect(fill="white",
+                                         size=0.5, linetype="solid", 
+                                         colour ="black")) + 
+  scale_color_identity(name="Clutch", 
+                       breaks=c("#FC0008", "#21FF05", "#0000FF", "#FC8008", "#c800080"), 
+                       labels=c(101, 102, 104, 105, 106), 
+                       guide="legend") +
+  scale_x_continuous(limits=c(3.75, 5.75), 
+                     breaks = c(4, 4.5, 5, 5.5), 
+                     labels=c("4", "4.5", "5", "5.5")) +
+  scale_y_continuous(limits=c(0,50), 
+                     breaks = c(0, 10, 20, 30, 40, 50))+
+  theme(axis.text.y=element_text(size=18, colour= "black")) +
+  theme(axis.text.x=element_text(size=18, colour= "black")) +
+  theme(axis.title.x=element_text(size=18, colour = "black")) +
+  theme(axis.title.y=element_text(size=18, colour = "black")) +
+  annotate("text",x=3.75,y=7,label="a", size=10)+
+  annotate("text",x=4,y=13,label="a", size=10)+
+  annotate("text",x=4.25,y=30,label="b", size=10)+
+  annotate("text",x=4.5,y=45,label="c", size=10)+
+  annotate("text",x=4.75,y=15,label="d", size=10)+
+  annotate("text",x=5.75,y=7,label="d", size=10)
+
+plot.sibs
+```
+
+It's tempting to just create graphics to the on-screen device and just use "Save As..." from the menu, but this doesn't allow you to explicitly set the options for the device and/or choose the file format. Although this default figure might look ~ okay ~ in the "Plots" section of RStudio, it does not export as a high-resolution figure. The default resolution of R and RStudio images are exported at 72 ppi - insufficient for publication. Most journals require 300 ppi images in TIFF, EPS, PNG or PDF format. Also, if you resize the graphics window after you create the graph, you can get some unexpected results (like strange ratios/circles that look like ovals). Avoid using dev.copy for the same reason, despite its convenience. 
+
+Best practice is to create a script file that begins with a call to the device driver (usually pdf or png), runs the graphics commands, and then finishes with a call to dev.off (). This way, you'll get better-looking results AND you'll be able to recreate the graphic file months later when you've definitely forgotten how you did it manually. 
+To export a high-resolution figure, we first assign the plot and then use another package called gridExtra. 
+
+```{r}
+# Load required package
+require(gridExtra)
+
+Figure4 <- plot_grid(plot.daily, plot.sibs, labels = "AUTO", ncol = 1, align = 'v')
+
+Figure4
+```
+
+This figure looks pretty squished in the html preview, but when I save this figure to my desktop, all the things are proportional and pretty!
+
+```{r}
+ggsave("~/Desktop/Figure4.pdf", 
+ plot = Figure4, # or give ggplot object name as in myPlot,
+ width = 18, height = 21, 
+ units = "cm", # other options c("in", "cm", "mm"), 
+ dpi = 300)
+dev.off()
+```
+
+For a .TIFF or .pdf format, change the relevant funtion and extension. 
+
+I recommend using a vector-based graphic format. This means that the graphic is represented in a scale-independent format, and can be recreated in any size small or large without resulting in jagged lines or pixellated text. When you print it or zoom way in, lines will appear smooth and text will be clear, even if the graphic has been enlarged or reduced and regardless of the DPI (dots-per-inch) rating on the printer. In practice, Microsoft products sometimes don't handle vector graphic reliably. Sometimes if I embed a graphic into MS word and save, it'll come out pixelated the next time I open the file. BUT I've found that this problem doesn't happen with PDF graphics created via the pdf() driver, so I think that's the best choice. 
+
+## Shake n' roll
+
+```{r}
+# final file = ShakeRoll_20180603.xlsx
+
+ShakeRoll.df<-read.xlsx("ShakeRoll_20190107.xlsx", sheetName="ShakeRoll")
+
+ShakeRoll.df$ConsensusStages<-as.numeric(as.character(ShakeRoll.df$ConsensusStages))
+ShakeRoll.df$HorNH<-as.factor(ShakeRoll.df$HorNH)
+```
+
+```{r}
+str(ShakeRoll.df)
+howmanyhatchedShakeRoll<-
+  ShakeRoll.df %>%
+  group_by(HorNH) %>%
+  summarize(count = n(),
+            mean = mean(CorrectedAvg),
+            SD = sd(CorrectedAvg), 
+            SE = sd(CorrectedAvg)/sqrt(n())
+            )
+#indivsperclutch$AgeGroup <- 5.2
+kable(howmanyhatchedShakeRoll,title="Mean & SD & SE",digits=4)
+```
+
+```{r}
+howmanyclutchesShakeRoll<-
+  ShakeRoll.df %>%
+  group_by(Clutch) %>%
+  summarize(count = n(),
+            mean = mean(CorrectedAvg),
+            SD = sd(CorrectedAvg), 
+            SE = sd(CorrectedAvg)/sqrt(n())
+            )
+#indivsperclutch$AgeGroup <- 5.2
+kable(howmanyclutchesShakeRoll,title="Mean & SD & SE",digits=4)
+```
+
+
+```{r}
+str(ShakeRoll.df)
+min(ShakeRoll.df$ConsensusStages, na.rm=T)
+max(ShakeRoll.df$ConsensusStages, na.rm=T)
+min(ShakeRoll.df$Age, na.rm=T)
+max(ShakeRoll.df$Age, na.rm=T)
+
+stage1 <- subset(ShakeRoll.df, ShakeRoll.df$ConsensusStages==1)
+stage1.NH <- subset(stage1, stage1$HorNH==0)
+stage1.H <- subset(stage1, stage1$HorNH==1)
+
+stage2 <- subset(ShakeRoll.df, ShakeRoll.df$ConsensusStages==2)
+stage2.NH <- subset(stage2, stage2$HorNH==0)
+stage2.H <- subset(stage2, stage2$HorNH==1)
+
+stage3 <- subset(ShakeRoll.df, ShakeRoll.df$ConsensusStages==3)
+stage3.NH <- subset(stage3, stage3$HorNH==0)
+stage3.H <- subset(stage3, stage3$HorNH==1)
+
+stage4 <- subset(ShakeRoll.df, ShakeRoll.df$ConsensusStages==4)
+stage4.NH <- subset(stage4, stage4$HorNH==0)
+stage4.H <- subset(stage4, stage4$HorNH==1)
+
+stage5 <- subset(ShakeRoll.df, ShakeRoll.df$ConsensusStages==5)
+stage5.NH <- subset(stage5, stage5$HorNH==0)
+stage5.H <- subset(stage5, stage5$HorNH==1)
+
+stage6 <- subset(ShakeRoll.df, ShakeRoll.df$ConsensusStages==6)
+stage6.NH <- subset(stage6, stage6$HorNH==0)
+stage6.H <- subset(stage6, stage6$HorNH==1)
+str(stage6)
+
+stage7 <- subset(ShakeRoll.df, ShakeRoll.df$ConsensusStages==7)
+stage7.NH <- subset(stage7, stage7$HorNH==0)
+stage7.H <- subset(stage7, stage7$HorNH==1)
+str(stage7)
+
+younger <- subset(ShakeRoll.df, as.numeric(ShakeRoll.df$ConsensusStages)<6)
+length(younger$AverageAmp) #N=18
+sum(younger$PropH) #none hatched
+mean(younger$AverageAmp) #average VOR
+sd(younger$AverageAmp) 
+se(younger$AverageAmp)
+
+correctedShakeRoll <- subset(ShakeRoll.df, ShakeRoll.df$CorrectedAvg==0)
+```
+
+##Fig 5A
+
+```{r}
+plot.VOR<-ggplot(ShakeRoll.df, aes(x=as.factor(ConsensusStages), y=CorrectedAvg, fill = HorNH)) + 
+  geom_boxplot(data=ShakeRoll.df, size=1, color="black") +
+  labs(y = "VOR amplitude (°)\n", 
+       x = "\n Developmental stage")+
+  theme_cowplot(font_size = 14, line_size = 1)+
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black")) +
+  annotate("text",x=1,y=5,label="a", size=6)+
+  annotate("text",x=2,y=5,label="a", size=6)+
+  annotate("text",x=3,y=5,label="a", size=6)+
+  annotate("text",x=4,y=25,label="a", size=6)+
+  annotate("text",x=5,y=18,label="b", size=6)+
+  annotate("text",x=6,y=17,label="c", size=6)+
+  theme(legend.background = element_rect(fill="white",
+                                         size=0.4, linetype="solid", 
+                                         colour ="black"))+
+  theme(legend.justification = c(0,1), legend.position = c(0.05, 1)) +
+  scale_fill_manual(name="Individual response", 
+                    breaks= levels(factor(ShakeRoll.df$HorNH)), 
+                    values=c("darkgray", "white"),
+                    labels=c("Not hatched", "Hatched"), 
+                    guide="legend")
+plot.VOR
+```
+
+
+START In clutches with partial vibration cued hatching, hatched embryos did have greater VOR than unhatched (hypoxia hatched) siblings. 
+
+partial = clutches where not all H or not all NH.
+For the subset of clutches where hatching occurred:
+```{r}
+ClutchesWHatching <- subset(ShakeRoll.df, ShakeRoll.df$PropH>0 & ShakeRoll.df$PropH<1)
+str(ClutchesWHatching)
+```
+
+```{r}
+howmanyclutches<-
+  ClutchesWHatching %>%
+  group_by(Clutch) %>%
+  summarize(count = n(),
+            mean = mean(CorrectedAvg),
+            SD = sd(CorrectedAvg), 
+            SE = sd(CorrectedAvg)/sqrt(n())
+            )
+#indivsperclutch$AgeGroup <- 5.2
+kable(howmanyclutches,title="Mean & SD & SE",digits=4)
+```
+
+```{r}
+hist(ClutchesWHatching$CorrectedAvg) #seems normal
+```
+
+Considering all tested individuals, those that hatched in playback had a significantly higher VOR than individuals that did not hatch in playback, but hatched in response to manual stimulation or hypoxia (Mixed Model, VOR Amplitude ~ Hatching State with Clutch as a random effect: χ2=4.8499, P=0.02765). 
+
+incorporate clutch as a random effect
+```{r}
+
+#library(lme4)
+
+lm0 = lm(CorrectedAvg ~ 1, data=ShakeRoll.df)
+lm1 = lm(CorrectedAvg ~ HorNH, data=ShakeRoll.df)
+lmm0 = lmer(CorrectedAvg ~ 1 + (1|Clutch), data=ShakeRoll.df)
+lmm1 = lmer(CorrectedAvg ~ HorNH + (1|Clutch), data=ShakeRoll.df) ###
+lmm2 = lmer(CorrectedAvg ~ HorNH + X1HIP2T3H+ (1|Clutch), data=ShakeRoll.df)
+
+AIC(lm0)
+AIC(lm1)
+AIC(lmm0)
+AIC(lmm1)
+AIC(lmm2)
+
+summary(lmm1)
+anova(lmm0,lmm1) #
+Anova(lmm1) #
+```
+
+For the subset of clutches where hatching occurred, individuals that hatched in playback tended to have higher VOR than siblings that did not hatch, but the difference was not significant (Mixed Model, χ2=3.1832, P=0.0744). 
+
+```{r}
+lm0 = lm(CorrectedAvg ~ 1, data=ClutchesWHatching)
+lm1 = lm(CorrectedAvg ~ HorNH, data=ClutchesWHatching)
+lmm0 = lmer(CorrectedAvg ~ 1 + (1|Clutch), data=ClutchesWHatching)
+lmm1 = lmer(CorrectedAvg ~ HorNH + (1|Clutch), data=ClutchesWHatching)
+lmm2 = lmer(CorrectedAvg ~ HorNH + X1HIP2T3H+ (1|Clutch), data=ClutchesWHatching)
+
+AIC(lm0)
+AIC(lm1)
+AIC(lmm0)
+AIC(lmm1)
+AIC(lmm2)
+
+summary(lmm1)
+anova(lmm0,lmm1)
+Anova(lmm1)
+
+```
+
+Those that hatched only in response to hypoxia had significantly different VORs from those that hatched from playback. 
+
+```{r}
+#library(lme4)
+lm0 = lm(CorrectedAvg ~ 1, data=ClutchesWHatching)
+lm1 = lm(CorrectedAvg ~ HorHyp, data=ClutchesWHatching)
+lmm0 = lmer(CorrectedAvg ~ 1 + (1|Clutch), data=ClutchesWHatching)
+lmm1 = lmer(CorrectedAvg ~ HorHyp + (1|Clutch), data=ClutchesWHatching)
+
+AIC(lm0)
+AIC(lm1)
+AIC(lmm0)
+AIC(lmm1)
+
+summary(lmm1)
+anova(lmm0,lmm1)
+Anova(lmm1)
+```
+Were hypoxic hatched individual less developed than hatched to playback indivs?
+
+```{r}
+HypoxicHatch<-subset(ClutchesWHatching, ClutchesWHatching$HorHyp == 0)
+PlaybackHatch<-subset(ClutchesWHatching, ClutchesWHatching$HorHyp == 1)
+
+mean(HypoxicHatch$ConsensusStages)
+se(HypoxicHatch$ConsensusStages)
+mean(PlaybackHatch$ConsensusStages)
+se(PlaybackHatch$ConsensusStages)
+```
+Seems like yes - 
+
+
+Those that hatched only in response to hypoxia had significantly different VORs from those that hatched from playback and/or manually applied mechanosensory stimulation (Mixed Model, χ2=5.3014, P=0.02131). 
+
+```{r}
+#library(lme4)
+lm0 = lm(CorrectedAvg ~ 1, data=ClutchesWHatching)
+lm1 = lm(CorrectedAvg ~ X1HIP2T3H, data=ClutchesWHatching)
+lmm0 = lmer(CorrectedAvg ~ 1 + (1|Clutch), data=ClutchesWHatching)
+lmm1 = lmer(CorrectedAvg ~ X1HIP2T3H + (1|Clutch), data=ClutchesWHatching)
+
+AIC(lm0)
+AIC(lm1)
+AIC(lmm0)
+AIC(lmm1)
+
+summary(lmm1)
+anova(lmm0,lmm1)
+Anova(lmm1)
+```
+
+
+
+##Fig 5B
+
+Of the 23 clutches with hatching, we compared mean VOR for each clutch (3-6 individuals per clutch, mean 4.666667±SE 0.2288689) with proportion hatched. Clutch hatching rate increases with mean VOR (Figure 6, linear regression one-way ANOVA, F1,21=8.7829, P=0.0074). 
+
+```{r}
+plot.PropH<-ggplot(ClutchesWHatching, aes(x=CorrectedAmpClutchMeans, y=PropH)) + 
+  geom_point(size=3) +
+  geom_smooth(method = "lm", se=TRUE, color="Black", linetype="dashed")+
+  labs(y = "Proportion of clutch hatched\n", 
+       x = "\n Clutch mean of VOR amplitude (°)\n")+
+  theme_cowplot(font_size = 14, line_size = 1)+
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))
+
+plot.PropH
+```
+
+combine plots 
+```{r}
+# Load required package
+require(gridExtra)
+
+Figure5 <- plot_grid(plot.VOR, plot.PropH, labels = "AUTO", ncol = 1, align = 'v')
+
+Figure5
+```
+
+This figure looks pretty squished in the html preview, but when I save this figure to my desktop, all the things are proportional and pretty!
+
+```{r}
+png("~/Desktop/Figure5.png", width = 18, height = 21, units = 'cm', res = 300)
+grid.arrange (Figure5) # Make plot
+
+#don't forget to embed fonts.
+#embed_fonts("plotname.pdf", outfile = "plotname_embed.pdf")
+dev.off()
+```
+
+```{r}
+ggsave("~/Desktop/Figure5.pdf", 
+ plot = Figure5, # or give ggplot object name as in myPlot,
+ width = 18, height = 21, 
+ units = "cm", # other options c("in", "cm", "mm"), 
+ dpi = 300)
+dev.off()
+```
+
+Other figure by individual - sep H and NH
+```{r}
+Hat<- subset(ShakeRoll.df, HorNH == "1")
+NoHat<- subset(ShakeRoll.df, HorNH == "0")
+
+summary(Hat$CorrectedAvg)
+mean(Hat$CorrectedAvg)
+se(Hat$CorrectedAvg)
+```
+
+```{r}
+##### BY FILL - ALL INDIVIDUALS
+ggplot(ShakeRoll.df, aes(x=CorrectedAvg, y=PropH, shape=HorNH)) + 
+  geom_point(data=Hat, shape = 21, size=3) +
+  geom_smooth(data=Hat, method = "lm", se=FALSE, color="Black", linetype="dashed") +
+  geom_point(data=NoHat, shape= 16, size=3) +
+  geom_smooth(data=NoHat, method = "lm", se=FALSE, color="Black", linetype="solid") +
+  theme_bw(20)+
+  ylab("Proportion of clutch hatched\n") +  
+  xlab("VOR amplitude (°)\n")
+```
+
+SAME THING BUT this time only clutches with partial hatching
+```{r}
+Hat<- subset(ClutchesWHatching, HorNH == "1")
+NoHat<- subset(ClutchesWHatching, HorNH == "0")
+
+##### BY FILL 
+ggplot(ClutchesWHatching, aes(x=CorrectedAvg, y=PropH, shape=HorNH)) + 
+  geom_point(data=Hat, shape = 21, size=3) +
+  geom_smooth(data=Hat, method = "lm", se=FALSE, color="Black", linetype="dashed") +
+  geom_point(data=NoHat, shape= 16, size=3) +
+  geom_smooth(data=NoHat, method = "lm", se=FALSE, color="Black", linetype="solid") +
+  theme_bw(20)+
+  ylab("Proportion of clutch hatched\n") +  
+  xlab("VOR amplitude (°)\n")
+
+```
+
+instead subset by a threshold VOR value
+```{r}
+lowVOR<-subset(ShakeRoll.df, AverageAmp < 20)
+sum(lowVOR$PropH)
+sum(as.numeric(as.character(lowVOR$HorNH)))
+length(lowVOR)
+
+highVOR<-subset(ShakeRoll.df, AverageAmp > 20)
+length(highVOR)
+sum(as.numeric(as.character(highVOR$HorNH)))
+148-67
+81/148
+67/148
+
+## ** take out <20 egrees and see if there’s a correlation between propH and VOR
+
+cor.test(highVOR$AverageAmp, highVOR$PropH, method="pearson")
+```
+
+plot above threshold values
+```{r}
+Hat<- subset(highVOR, HorNH == "1")
+NoHat<- subset(highVOR, HorNH == "0")
+
+##### BY FILL 
+ggplot(highVOR, aes(x=CorrectedAvg, y=PropH, shape=HorNH)) +
+  geom_point(data=Hat, shape = 21, size=3) +
+  geom_smooth(data=Hat, method = "lm", se=FALSE, color="Black", linetype="dashed") +
+  geom_point(data=NoHat, shape= 16, size=3) +
+  geom_smooth(data=NoHat, method = "lm", se=FALSE, color="Black", linetype="solid") +
+  theme_bw(20)+
+  ylab("Proportion of clutch hatched\n") +  
+  xlab("VOR amplitude (°)\n")
+```
+
+WITH THRESHOLDED INDIVS: does hatching state matter? (NO)
+```{r}
+lm0 = lm(CorrectedAvg ~ 1, data=highVOR)
+lm1 = lm(CorrectedAvg ~ HorNH, data=highVOR)
+lmm0 = lmer(CorrectedAvg ~ 1 + (1|Clutch), data=highVOR)
+lmm1 = lmer(CorrectedAvg ~ HorNH + (1|Clutch), data=highVOR) ###
+lmm2 = lmer(CorrectedAvg ~ HorNH + X1HIP2T3H+ (1|Clutch), data=highVOR)
+lmm3 = lmer(CorrectedAvg ~ HorNH + ConsensusStages+ (1|Clutch), data=highVOR)
+
+AIC(lm0)
+AIC(lm1)
+AIC(lmm0)
+AIC(lmm1)
+AIC(lmm2)
+AIC(lmm3)
+
+Anova(lmm3)
+```
+
+## Jiggle n' roll
+
+```{r}
+tactile<-read.xlsx("2cues_20190318.xls", sheetName="fixed")
+
+hist(log(tactile$Average.Amplitude)) #seems normal
+```
+
+```{r}
+mod0 <- lmer(Average.Amplitude ~ 1 + (1|Clutch), data=tactile)
+tactile$Developmental.Stage <- factor(tactile$Developmental.Stage)
+mod1 <- lmer(Average.Amplitude ~ Developmental.Stage + (1|Clutch), data=tactile)
+
+anova(mod0,mod1)
+```
+VOR increased in magnitude across embryonic development with stage (Mixed Model, χ2=90.082, P=2.2e-16, Fig. 6A). 
+
+HERE WE LOOK FOR CLUTCH EFFECT OR CLUTCH x AGE INTERACTIONS:
+### reported
+```{r}
+#REPORTED
+model1 <- lm(Average.Amplitude ~ 1, data=tactile)
+model2 <- lm(Average.Amplitude ~ Developmental.Stage, data=tactile)
+model3 <- lm(Average.Amplitude ~ Clutch, data=tactile)
+model4 <- lm(Average.Amplitude ~ Developmental.Stage + Clutch, data = tactile)
+model5 <- lm(Average.Amplitude ~ Developmental.Stage * Clutch, data=tactile)
+model6 <- lmer(Average.Amplitude ~ Developmental.Stage + (1|Clutch), data=tactile)
+model7 <- lmer(Average.Amplitude ~ Clutch + (1|Clutch), data=tactile)
+model8 <- lmer(Average.Amplitude ~ Developmental.Stage + Clutch + (1|Clutch), data=tactile)
+model9 <- lmer(Average.Amplitude ~ Developmental.Stage * Clutch + (1|Clutch), data=tactile)
+
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
+AIC(model5)
+AIC(model6) 
+AIC(model7)
+AIC(model8) ##
+AIC(model9)
+
+anova(model6, model8) #clutch effect
+anova(model7, model8) #stage effect
+```
+
+Post hoc tests
+```{r}
+library(multcomp)
+tactile$Developmental.Stage <- factor(tactile$Developmental.Stage)
+ph1<-glht(model8, linfct=mcp(Developmental.Stage="Tukey"))
+summary(ph1)
+```
+
+To get the letter summaries:
+```{r}
+cld(ph1) 
+```
+
+Subset just stages 2-4:
+```{r}
+stage2to4<-subset(tactile, as.numeric(as.character(Developmental.Stage))<5)
+youngins_model8 <- lmer(Average.Amplitude ~ Developmental.Stage + Clutch + (1|Clutch), data=stage2to4)
+ph1<-glht(youngins_model8, linfct=mcp(Developmental.Stage="Tukey"))
+summary(ph1)
+```
+
+To get the letter summaries:
+```{r}
+cld(ph1) ## so close to different but not. 
+```
+
+to test variability
+```{r}
+bartlett.test(Average.Amplitude ~ Developmental.Stage, tactile) 
+```
+
+We used generalized linear mixed models (GLMM, lme4 package; Bates and Maechler 2009)
+
+Use a GLMM with binomial error distribution to test if the probability of hatching was predicted by developmental stage and VOR. The response variable was the response of each individual embryo (hatched or not) and we included clutch as a random intercept in the model to account for non-independence of clutches. For GLMMs we estimated p values of our predictors by using likelihood ratio tests of nested models (Zuur et al. 2009).
+
+
+incorporate clutch as a random effect
+
+Run the models w/ both predictors, i.e. stage & VOR together in the model
+Does stage contribute anything once individual VOR is in the model?
+
+```{r}
+glmm0 <- glmer(Response ~ 1 + (1|Clutch), family=binomial(logit), data=tactile)
+
+glmm1 <- glmer(Response ~ Developmental.Stage + (1|Clutch), family=binomial(logit), data=tactile)
+```
+The warnings here (for example "unable to evaluate scaled gradient Hessian is numerically singular: parameters are not uniquely determined") occur because:
+
+The Hessian is singular because the optimizer can't distinguish some of your parameters. This makes sense, given that your data set does not really distinguish them either. Some of your variables are heavily weighted towards certain values over others. So you need a more balanced data set. 
+
+Hessian problem can be due to low representation 
+of certain values in the response, as well as to a small sample size.
+
+
+```{r}
+glmm1 <- glmer(Response ~ Developmental.Stage + (1|Clutch), family=binomial(logit), data=tactile, glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000)))
+
+glmm2 <- glmer(Response ~ Average.Amplitude + (1|Clutch), family=binomial(logit), data=tactile)
+
+glmm3 <- glmer(Response ~ Average.Amplitude + Developmental.Stage + (1|Clutch), family=binomial(logit), data=tactile)
+
+
+summary(glmm1)
+summary(glmm2)
+summary(glmm3)
+
+AIC(glmm1)
+AIC(glmm2)
+AIC(glmm3)
+
+qqnorm(resid(glmm1))
+qqnorm(resid(glmm2))
+qqnorm(resid(glmm3))
+
+anova(glmm1,glmm3) # VOR effect
+anova(glmm2,glmm3) # stage effect
+```
+
+According to Justin (at STRI workshop): With mixed effects models, you can use the Anova() function from the car package to calculate summary statistics, but it is not advised by the R gurus. Instead, you should use Likelihood Ratio Tests (LRT) to compare nested models.
+
+
+To get total N of embryos tested, by stage
+```{r}
+tactile_table<-
+  tactile %>%
+  group_by(Developmental.Stage) %>%
+  summarize(count = n(),
+            mean = mean(CorrectedAvg),
+            SD = sd(CorrectedAvg), 
+            SE = sd(CorrectedAvg)/sqrt(n())
+            )
+kable(tactile_table,title="Mean & SD & SE",digits=3)
+
+correctedTactile <- subset(tactile, tactile$CorrectedAvg==0)
+```
+
+separate younger (stage 2-4) and older (stage 5-7)
+```{r}
+younger<-subset(tactile, Developmental.Stage < 5)
+older<-subset(tactile, Developmental.Stage > 4)
+
+mean(younger$CorrectedAvg)
+se(younger$CorrectedAvg)
+mean(older$CorrectedAvg)
+se(older$CorrectedAvg)
+```
+
+To get range of N per clutch tested
+```{r}
+clutch_tactile_table<-
+  tactile %>%
+  group_by(Clutch) %>%
+  summarize(count = n(),
+            mean = mean(CorrectedAvg),
+            SD = sd(CorrectedAvg), 
+            SE = sd(CorrectedAvg)/sqrt(n())
+            )
+kable(clutch_tactile_table,title="Mean & SD & SE",digits=3)
+```
+
+
+
+PROP H of EACH STAGE: 
+```{r}
+st1 <- subset(tactile, Developmental.Stage == "1", na.rm=T) #0
+st1.NH <- subset(st1, st1$Response==0) #0
+st1.H <- subset(st1, st1$Response==1) #0
+st2 <- subset(tactile, Developmental.Stage == "2", na.rm=T) #4
+st2.NH <- subset(st2, st2$Response==0) #4
+st2.H <- subset(st2, st2$Response==1) #0
+st3 <- subset(tactile, Developmental.Stage == "3", na.rm=T) #29
+st3.NH <- subset(st3, st3$Response==0) #24
+st3.H <- subset(st3, st3$Response==1) #5
+st4 <- subset(tactile, Developmental.Stage == "4", na.rm=T) #19
+st4.NH <- subset(st4, st4$Response==0) #10
+st4.H <- subset(st4, st4$Response==1) #9
+st5 <- subset(tactile, Developmental.Stage == "5", na.rm=T) #24
+st5.NH <- subset(st5, st5$Response==0) #6
+st5.H <- subset(st5, st5$Response==1) #18
+st6 <- subset(tactile, Developmental.Stage == "6", na.rm=T) #33
+st6.NH <- subset(st6, st6$Response==0) #7
+st6.H <- subset(st6, st6$Response==1) #26
+st7 <- subset(tactile, Developmental.Stage == "7", na.rm=T) #3
+st7.NH <- subset(st7, st7$Response==0) #0
+st7.H <- subset(st7, st7$Response==1) #3
+```
+
+```{r}
+hat <- subset(tactile, Response == "1") #61
+nohat <- subset(tactile, Response == "0") #51
+str(hat)
+str(nohat)
+
+sum(st3$Response==0)
+sum(st3$Response==1)
+#propH (of st3) = 5/(5+24) = 0.2083333
+
+sum(st4$Response==0)
+sum(st4$Response==1)
+#propH (of st4) = 9/(9+10) = 0.4736842
+
+sum(st5$Response==0)
+sum(st5$Response==1)
+#propH (of st5) = 18/(18+6) = 0.75
+
+sum(st6$Response==0)
+sum(st6$Response==1)
+#propH (of st6) = 26/(26+7) = 0.7878788
+
+sum(st7$Response==0)
+sum(st7$Response==1)
+#propH (of st7) = 3/(3+0) = 1
+
+stage<-c(2, 3, 4, 5, 6, 7)
+N<-c(4, 29, 19, 24, 33, 3)
+propH<-c(0, 0.2083333, 0.4736842, 0.75, 0.7878788, 1)
+propH_fig6_df<- data.frame (stage, N, propH)
+
+
+```
+
+## Fig 6
+
+```{r}
+plot.VORfig6<-ggplot(tactile, aes(x=as.factor(Developmental.Stage), y=CorrectedAvg, fill = as.factor(Response))) + 
+  geom_boxplot(data=tactile, size=1, color="black") +
+  labs(y = "VOR amplitude (°)\n", 
+       x = "\n Developmental stage")+
+  theme_cowplot(font_size = 14, line_size = 1)+
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_blank()) +
+  theme(axis.title.y=element_text(size=14, colour = "black")) +
+  annotate("text",x=1,y=5,label="a", size=6)+
+  annotate("text",x=2,y=15,label="a", size=6)+
+  annotate("text",x=3,y=25,label="a", size=6)+
+  annotate("text",x=4,y=30,label="b", size=6)+
+  annotate("text",x=5,y=35,label="c", size=6)+
+  annotate("text",x=6,y=40,label="c", size=6)+
+  theme(legend.background = element_rect(fill="white",
+                                         size=0.4, linetype="solid", 
+                                         colour ="black"))+
+  theme(legend.justification = c(0,1), legend.position = c(0.05, 1)) +
+  scale_fill_manual(name="Individual response", 
+                    breaks= levels(factor(tactile$Response)), 
+                    values=c("darkgray", "white"),
+                    labels=c("Not hatched", "Hatched"), 
+                    guide="legend")
+plot.VORfig6
+```
+
+```{r}
+rects <- data.frame(xstart = c(1.7, 2.7, 3.7, 4.7, 5.7, 6.7), xend = c(2.3, 3.3, 4.3, 5.3, 6.3, 7.3))
+
+plot.PropHfig6<-ggplot(propH_fig6_df, aes(x=stage, y=propH)) + 
+  geom_rect(data = rects, aes(xmin = xstart, xmax = xend, ymin = 0, ymax = 1), fill = "black")+
+  geom_bar(stat="identity", size=1, color="black", width=0.56, fill="white") +
+  labs(y = "Proportion hatched \n", 
+       x = "\n Developmental stage")+
+  scale_x_continuous(breaks = c(2, 3, 4, 5, 6, 7))+
+  theme_cowplot(font_size = 14, line_size = 1)+
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))
+
+plot.PropHfig6
+```
+
+combine plots 
+```{r}
+# Load required package
+require(gridExtra)
+
+Figure6 <- plot_grid(plot.VORfig6, plot.PropHfig6, labels = "AUTO", ncol = 1, align = 'v')
+
+Figure6
+```
+
+This figure looks pretty squished in the html preview, but when I save this figure to my desktop, all the things are proportional and pretty!
+
+```{r}
+png("~/Desktop/Figure6.png", width = 18, height = 21, units = 'cm', res = 300)
+grid.arrange (Figure6) # Make plot
+
+#don't forget to embed fonts.
+#embed_fonts("plotname.pdf", outfile = "plotname_embed.pdf")
+dev.off()
+```
+
+```{r}
+ggsave("~/Desktop/Figure6.pdf", 
+ plot = Figure6, # or give ggplot object name as in myPlot,
+ width = 18, height = 21, 
+ units = "cm", # other options c("in", "cm", "mm"), 
+ dpi = 300)
+dev.off()
+```
+
+##Fig 7
+
+Moreover, developmental stage and VOR amplitude were significant predictors of hatching (Fig. 8a, binomial GLMM for Response ~ Stage + VOR with Clutch as a random effect). 
+
+```{r}
+plot.stageGLM<-ggplot(tactile, aes(x=as.numeric(as.character(Developmental.Stage)), y=as.numeric(as.character((Response)), shape=as.factor(Response)))) +
+  stat_smooth(method = "glm", method.args=list(family="binomial"), color="black", linetype="dashed") +
+  geom_point(data=hat, shape=21, size=3, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=nohat, shape=16, size=3, position=position_jitter(height=0.06, width=0.2)) +
+  scale_y_continuous(breaks = c(0, 1))+
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))+
+  labs(y = "Hatching response \n", 
+       x = "\n Developmental stage")+
+  theme_cowplot(font_size = 14, line_size = 1)
+
+plot.stageGLM
+```
+
+```{r}
+plot.VORGLM<-ggplot(tactile, aes(x=CorrectedAvg, y=as.numeric(as.character((Response)), shape=as.factor(Response)))) +
+  stat_smooth(method = "glm", method.args=list(family="binomial"), color="black", linetype="dashed") +
+  geom_point(data=hat, shape=21, size=3, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=nohat, shape=16, size=3, position=position_jitter(height=0.06, width=0.2)) +
+  scale_y_continuous(breaks = c(0, 1))+
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))+
+  labs(y = "Hatching response \n", 
+       x = "\n VOR amplitude (°)")+
+  theme_cowplot(font_size = 14, line_size = 1)
+
+plot.VORGLM
+```
+
+combine plots 
+```{r}
+# Load required package
+require(gridExtra)
+
+Figure7 <- plot_grid(plot.stageGLM, plot.VORGLM, labels = "AUTO", ncol = 1, align = 'v')
+
+Figure7
+```
+
+This figure looks pretty squished in the html preview, but when I save this figure to my desktop, all the things are proportional and pretty!
+
+```{r}
+png("~/Desktop/Figure7.png", width = 18, height = 21, units = 'cm', res = 300)
+grid.arrange (Figure7) # Make plot
+
+#don't forget to embed fonts.
+#embed_fonts("plotname.pdf", outfile = "plotname_embed.pdf")
+dev.off()
+```
+
+```{r}
+ggsave("~/Desktop/Figure7.pdf", 
+ plot = Figure7, # or give ggplot object name as in myPlot,
+ width = 18, height = 21, 
+ units = "cm", # other options c("in", "cm", "mm"), 
+ dpi = 300)
+dev.off()
+```
+
+pairwise comparisons. 
+
+```{r}
+tactile$Developmental.Stage<-as.factor(tactile$Developmental.Stage)
+lmer3<-lmer(CorrectedAvg ~ Developmental.Stage + (1|Clutch), data=tactile)
+lm4<-glht(lmer3, linfct=mcp(Developmental.Stage="Tukey"))
+summary(lm4)
+cld(lm4) 
+
+```
+
+Extra: 
+```{r}
+# test for stage & VOR effects & interactions?
+# an analysis of hatching looking at stage & VOR as predictors 
+
+#stage as predictor of hatching
+hist(as.numeric(tactile$Developmental.Stage))
+boxplot(as.numeric(hat$Developmental.Stage), as.numeric(nohat$Developmental.Stage), xlab="Response", ylab="Developmental Stage")
+axis(1, at=1:2, labels=c("Hatched", "Not Hatched"))
+t.test(as.numeric(hat$Developmental.Stage), as.numeric(nohat$Developmental.Stage), mu = 0, alt="two.sided", paired = F, conf.int=T, conf.level=0.99)
+## wilcox.test(as.numeric(hat$Developmental.Stage), as.numeric(nohat$Developmental.Stage), mu = 0, alt="two.sided", paired = F, conf.int=T, conf.level=0.99)
+
+#VOR as predictor of hatching
+hist(tactile$CorrectedAvg)
+boxplot(hat$CorrectedAvg, nohat$CorrectedAvg, xlab="Response", ylab="VOR Amplitude")
+axis(1, at=1:2, labels=c("Hatched", "Not Hatched"))
+t.test(as.numeric(hat$Developmental.Stage), as.numeric(nohat$Developmental.Stage), mu = 0, alt="two.sided", paired = F, conf.int=T, conf.level=0.99)
+wtest<-wilcox.test(as.numeric(hat$CorrectedAvg), as.numeric(nohat$CorrectedAvg), mu = 0, alt="two.sided", paired = F, conf.int=T, conf.level=0.99)
+qnorm(wtest$p.value) #z-value to report
+```
+
+## Latency analysis
+
+```{r}
+tactile$Latency.to.Hatch.in.Minutes<-as.numeric(as.character((tactile$Latency.to.Hatch.in.Minutes)))
+
+hat <- subset(tactile, Response == "1") #61
+nohat <- subset(tactile, Response == "0") #51
+```
+
+using CorrectedAvg
+```{r}
+model1 <- lm(Latency.to.Hatch.in.Minutes ~ 1, data=tactile)
+model2 <- lm(Latency.to.Hatch.in.Minutes ~ Developmental.Stage, data=tactile)
+model3 <- lm(Latency.to.Hatch.in.Minutes ~ CorrectedAvg, data=tactile)
+model4 <- lm(Latency.to.Hatch.in.Minutes ~ Developmental.Stage + CorrectedAvg, data = tactile)
+model5 <- lm(Latency.to.Hatch.in.Minutes ~ Developmental.Stage * CorrectedAvg, data=tactile)
+
+model6 <- lmer(Latency.to.Hatch.in.Minutes ~ 1 + (1|Clutch), data=tactile)
+model7 <- lmer(Latency.to.Hatch.in.Minutes ~ Developmental.Stage + (1|Clutch), data=tactile)
+model8 <- lmer(Latency.to.Hatch.in.Minutes ~ CorrectedAvg + (1|Clutch), data=tactile)
+model9 <- lmer(Latency.to.Hatch.in.Minutes ~ Developmental.Stage + CorrectedAvg + (1|Clutch), data=tactile)
+model10 <- lmer(Latency.to.Hatch.in.Minutes ~ Developmental.Stage * CorrectedAvg + (1|Clutch), data=tactile)
+
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
+AIC(model5)
+
+AIC(model6) 
+AIC(model7) # best model
+AIC(model8)
+AIC(model9)
+AIC(model10) 
+
+#without clutch as random effect
+anova(model2, model4) #VOR effect
+anova(model3, model4) #stage effect
+anova(model4, model5) # VOR x stage interaction
+Anova(model5)
+
+#with clutch as random effect
+Anova(model8) #REPORTED IN PAPER - 
+Anova(model10) #REPORTED IN PAPER - 
+anova(model7, model9) #VOR effect
+anova(model8, model9) #stage effect
+anova(model9, model10) # VOR x stage interaction
+
+```
+
+separate stages for latency analysis: 
+```{r}
+st3 <- subset(tactile, Developmental.Stage == "3", na.rm=T) #29
+st4 <- subset(tactile, Developmental.Stage == "4", na.rm=T) #19
+st5 <- subset(tactile, Developmental.Stage == "5", na.rm=T) #24
+st6 <- subset(tactile, Developmental.Stage == "6", na.rm=T) #33
+st7 <- subset(tactile, Developmental.Stage == "7", na.rm=T) #3
+```
+
+```{r}
+#stage 3
+model1 <- lm(Latency.to.Hatch.in.Minutes ~ 1, data=st3)
+model2 <- lm(Latency.to.Hatch.in.Minutes ~ CorrectedAvg, data=st3)
+model3 <- lmer(Latency.to.Hatch.in.Minutes ~ 1 + (1|Clutch), data=st3)
+model4 <- lmer(Latency.to.Hatch.in.Minutes ~ CorrectedAvg + (1|Clutch), data=st3)
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
+anova(model3, model4) #no VOR effect
+Anova(model4)
+
+ggplot(st3, aes(x=CorrectedAvg, y=as.numeric(as.character(Latency.to.Hatch.in.Minutes)))) +
+  geom_smooth(method = "lm", se=TRUE, color="Black", linetype="dashed") +
+  geom_point(data=st3, size=3)+
+  theme_cowplot(font_size = 14, line_size = 1) +
+  labs(x = "\nVOR amplitude (°)", 
+       y = "Latency to hatch (mins)\n") +
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))
+
+```
+
+```{r}
+#stage 4
+model1 <- lm(Latency.to.Hatch.in.Minutes ~ 1, data=st4)
+model2 <- lm(Latency.to.Hatch.in.Minutes ~ CorrectedAvg, data=st4)
+model3 <- lmer(Latency.to.Hatch.in.Minutes ~ 1 + (1|Clutch), data=st4)
+model4 <- lmer(Latency.to.Hatch.in.Minutes ~ CorrectedAvg + (1|Clutch), data=st4)
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
+anova(model1, model2) #no VOR effect
+Anova(model2)
+
+ggplot(st4, aes(x=CorrectedAvg, y=as.numeric(as.character(Latency.to.Hatch.in.Minutes)))) +
+  geom_smooth(method = "lm", se=TRUE, color="Black", linetype="dashed") +
+  geom_point(data=st4, size=3)+
+  theme_cowplot(font_size = 14, line_size = 1) +
+  labs(x = "\nVOR amplitude (°)", 
+       y = "Latency to hatch (mins)\n") +
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))
+```
+
+```{r}
+#stage 5
+model1 <- lm(Latency.to.Hatch.in.Minutes ~ 1, data=st5)
+model2 <- lm(Latency.to.Hatch.in.Minutes ~ CorrectedAvg, data=st5)
+model3 <- lmer(Latency.to.Hatch.in.Minutes ~ 1 + (1|Clutch), data=st5)
+model4 <- lmer(Latency.to.Hatch.in.Minutes ~ CorrectedAvg + (1|Clutch), data=st5)
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
+anova(model1, model2) #no VOR effect
+Anova(model2)
+
+ggplot(st5, aes(x=CorrectedAvg, y=as.numeric(as.character(Latency.to.Hatch.in.Minutes)))) +
+  geom_smooth(method = "lm", se=TRUE, color="Black", linetype="dashed") +
+  geom_point(data=st5, size=3)+
+  theme_cowplot(font_size = 14, line_size = 1) +
+  labs(x = "\nVOR amplitude (°)", 
+       y = "Latency to hatch (mins)\n") +
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))
+```
+
+```{r}
+#stage 6
+model1 <- lm(Latency.to.Hatch.in.Minutes ~ 1, data=st6)
+model2 <- lm(Latency.to.Hatch.in.Minutes ~ CorrectedAvg, data=st6)
+model3 <- lmer(Latency.to.Hatch.in.Minutes ~ 1 + (1|Clutch), data=st6)
+model4 <- lmer(Latency.to.Hatch.in.Minutes ~ CorrectedAvg + (1|Clutch), data=st6)
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
+anova(model1, model2) # yes VOR effect
+Anova(model4)
+
+ggplot(st6, aes(x=CorrectedAvg, y=as.numeric(as.character(Latency.to.Hatch.in.Minutes)))) +
+  geom_smooth(method = "lm", se=TRUE, color="Black", linetype="dashed") +
+  geom_point(data=st6, size=3)+
+  theme_cowplot(font_size = 14, line_size = 1) +
+  labs(x = "\nVOR amplitude (°)", 
+       y = "Latency to hatch (mins)\n") +
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))
+```
+
+```{r}
+#stage 7
+model1 <- lm(Latency.to.Hatch.in.Minutes ~ 1, data=st7)
+model2 <- lm(Latency.to.Hatch.in.Minutes ~ CorrectedAvg, data=st7)
+model3 <- lmer(Latency.to.Hatch.in.Minutes ~ 1 + (1|Clutch), data=st7)
+model4 <- lmer(Latency.to.Hatch.in.Minutes ~ CorrectedAvg + (1|Clutch), data=st7)
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
+anova(model1, model2) # no VOR effect
+Anova(model2)
+
+ggplot(st7, aes(x=CorrectedAvg, y=as.numeric(as.character(Latency.to.Hatch.in.Minutes)))) +
+  geom_smooth(method = "lm", se=TRUE, color="Black", linetype="dashed") +
+  geom_point(data=st7, size=3)+
+  theme_cowplot(font_size = 14, line_size = 1) +
+  labs(x = "\nVOR amplitude (°)", 
+       y = "Latency to hatch (mins)\n") +
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))
+```
+
+## Fig 8
+```{r}
+8+6+15+11+10+12
+
+str(tactile$CorrectedAvg)
+str(tactile$Latency.to.Hatch.in.Minutes)
+range(tactile$Latency.to.Hatch.in.Minutes, na.rm=T)
+range(tactile$CorrectedAvg, na.rm=T)
+```
+
+```{r}
+Figure8 <- ggplot(tactile, aes(x=CorrectedAvg, y=as.numeric(as.character(Latency.to.Hatch.in.Minutes)))) +
+  geom_smooth(method = "lm", se=TRUE, color="Black", linetype="dashed") +
+  geom_point(data=st3.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[1]), size=3) +
+  geom_point(data=st4.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[2]), size=3) +
+  geom_point(data=st5.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[3]), size=3) +
+  geom_point(data=st6.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[4]), size=3) +
+  geom_point(data=st7.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[5]), size=3) +
+  theme_cowplot(font_size = 14, line_size = 1) +
+  labs(x = "\nVOR amplitude (°)", 
+       y = "Latency to hatch (min)\n") +
+  theme(legend.justification = c(0,1), legend.position = c(0.8,1)) +
+  theme(legend.background = element_rect(fill="white",
+                                         size=0.5, linetype="solid", 
+                                         colour ="black")) +
+  scale_color_identity(name="Stage", 
+                       breaks=c(stagecolors[1], stagecolors[2], stagecolors[3], stagecolors[4], stagecolors[5]), 
+                       labels=c(3, 4, 5, 6, 7), 
+                       guide="legend") +
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))
+
+Figure8
+```
+
+```{r}
+png("~/Desktop/VOR_ms_figures/Figure8.png", width = 18, height = 15, units = 'cm', res = 300)
+grid.arrange (Figure8) # Make plot
+dev.off()
+```
+
+```{r}
+ggsave("~/Desktop/VOR_ms_figures/Figure8.pdf", 
+ plot = Figure8, # or give ggplot object name as in myPlot,
+ width = 18, height = 15, 
+ units = "cm", # other options c("in", "cm", "mm"), 
+ dpi = 300)
+dev.off()
+```
+
+#Fig 9
+```{r}
+Figure9 <- ggplot(tactile, aes(x=as.numeric(as.character(Developmental.Stage)), y=as.numeric(as.character(Latency.to.Hatch.in.Minutes))), group=as.numeric(as.character(Average.Amplitude))) +
+  geom_point(aes(colour = as.numeric(as.character(Average.Amplitude))), size=3, position=position_jitter(height=0.4, width=0.4)) +
+  scale_colour_gradient(low = "black", high = "red", name = "VOR°", space = "Lab", na.value = "grey50", guide = "colourbar", aesthetics = "colour")+
+  theme_cowplot(font_size = 14, line_size = 1) +
+  labs(x = "\n Developmental Stage", 
+       y = "Latency to hatch (mins)\n") +
+  xlim(3, 7) +
+  theme(legend.justification = c(0,1), legend.position = c(0.85,1)) +
+  theme(legend.background = element_rect(fill="white",
+                                         size=0.5, linetype="solid", 
+                                         colour ="black")) +
+  theme(axis.text.y=element_text(size=14, colour= "black")) +
+  theme(axis.text.x=element_text(size=14, colour= "black")) +
+  theme(axis.title.x=element_text(size=14, colour = "black")) +
+  theme(axis.title.y=element_text(size=14, colour = "black"))
+
+Figure9
+```
+
+
+```{r}
+png("~/Desktop/Figure9.png", width = 18, height = 15, units = 'cm', res = 300)
+grid.arrange (Figure9) # Make plot
+dev.off()
+```
+
+```{r}
+ggsave("~/Desktop/Figure9.pdf", 
+ plot = Figure9, # or give ggplot object name as in myPlot,
+ width = 18, height = 15, 
+ units = "cm", # other options c("in", "cm", "mm"), 
+ dpi = 300)
+dev.off()
+```
+
+```{r}
+cor.test(tactile$CorrectedAvg, tactile$Latency.to.Hatch.in.Minutes, method="pearson")
+cor.test(tactile$Developmental.Stage, tactile$Latency.to.Hatch.in.Minutes, method="pearson")
+```
+
+seven individuals (11%) had no detectable VOR; they hatched X–X h before their siblings showed VOR. 
+
+First, subset just the 7 individuals that hatched with no VOR. 
+
+```{r}
+sort(hat$CorrectedAvg)
+sort(nohat$CorrectedAvg)
+sort(tactile$CorrectedAvg)
+
+seven <- subset(tactile, CorrectedAvg == 0 & Response == 1)
+
+others <- subset(tactile, CorrectedAvg > 0 & Response ==1)
+```
+
+compare H time
+```{r}
+seven$Time.Hatched<-as.numeric(seven$Time.Hatched)
+mean(seven$Time.Hatched)
+
+others$Time.Hatched<-as.numeric(others$Time.Hatched)
+mean(others$Time.Hatched)
+
+mean(others$Time.Hatched)-mean(seven$Time.Hatched)
+```
+
+END
+
+POR FIN
