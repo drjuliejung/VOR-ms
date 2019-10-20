@@ -26,7 +26,9 @@ library(scales);library(RColorBrewer);library(gridExtra);library(cowplot)
 
 Colors
 ```{r}
-stagecolors <- c("black", "brown2", "orange1", "sienna4", "limegreen", "forestgreen")
+#stagecolors <- c("black", "brown2", "orange1", "sienna4", "limegreen", "forestgreen")
+
+stagecolors <- brewer.pal("BrBG", n=11)
 #2     none
 #3    1      medium
 #4     1     lots
@@ -34,12 +36,17 @@ stagecolors <- c("black", "brown2", "orange1", "sienna4", "limegreen", "forestgr
 #6    lots      lots
 #7    lots      medium     
 #8    lots     none
-clutchcolors<- c("cyan1", "cadetblue2",  "dodgerblue1", "blue2", "navyblue")
+clutchcolors<- c("red", "green", "blue", "orange", "purple")
+#RED = c101
+#GREEN= c102
+#blue=c104
+#orange=c105
+#PURPLE = c106
 
+#clutchcolors<- c("cyan1",  "mediumturquoise", "blue2", "navyblue")
 
 #library(RColorBrewer)
 #stagecolors <- brewer.pal("Dark2", n=6)
-#clutchcolors<- c("red", "blue", "green", "purple", "orange")
 #clutchgrays<- brewer.pal("Greys", n=9)
 ```
 
@@ -144,6 +151,7 @@ sibship_stuff<-
 #indivsperclutch$AgeGroup <- 5.2
 kable(sibship_stuff,title="Mean & SD & SE",digits=4)
 ```
+
 
 incorporate clutch as a random effect
 ```{r}
@@ -318,55 +326,20 @@ ggplot(SubsetSibshipsSonia.df, aes(x=Age, y=CorrectedAvg, group=Age)) +
 ```
 For pairwise comparisons, see Jmp analysis.
 
-## Fig4
-
-Plot part A of figure: 
-
-```{r}
-plot.daily <- ggplot(Daily.df, aes(x=Age, y=CorrectedAvg, group=as.factor(as.character(Age)))) +
-  geom_boxplot(data=Daily.df, size=1) +
-  geom_point(data=stage3, aes(colour=stagecolors[1]), size=3) +
-  geom_point(data=stage4, aes(colour=stagecolors[2]), size=3) +
-  geom_point(data=stage5, aes(colour=stagecolors[3]), size=3) +
-  geom_point(data=stage6, aes(colour=stagecolors[4]), size=3) +
-  geom_point(data=stage7, aes(colour=stagecolors[5]), size=3) +
-  geom_point(data=stage8, aes(colour=stagecolors[6]), size=3) +
-  theme_cowplot(font_size = 14, line_size = 1) +
-  scale_color_identity(name="Stage", 
-                       breaks=c(stagecolors[1], stagecolors[2], stagecolors[3], stagecolors[4], stagecolors[5], stagecolors[6]), 
-                       labels=c(3, 4, 5, 6, 7, 8), 
-                       guide="legend") +
-  scale_x_continuous(breaks = c(3, 4, 5, 6))+
-  labs(y = "VOR amplitude (°)\n") +
-  theme(axis.text.y=element_text(size=14, colour= "black")) +
-  theme(axis.text.x=element_text(size=14, colour= "black")) +
-  theme(axis.title.x=element_blank()) +
-  theme(axis.title.y=element_text(size=14, colour = "black")) +
-  theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
-  theme(legend.background = element_rect(fill="white",
-                                  size=0.4, linetype="solid", 
-                                  colour ="black")) + 
-  annotate("text",x=3,y=15,label="a", size=6)+
-  annotate("text",x=4,y=35,label="b", size=6)+
-  annotate("text",x=5,y=33,label="b", size=6)+
-  annotate("text",x=6,y=40,label="b", size=6)
-
-plot.daily
-```
-
+## Fig3
 
 ```{r}
 plot.daily <- ggplot(Daily.df, aes(x=Age, y=CorrectedAvg, group=as.factor(as.character(Age)))) +
   geom_boxplot(data=Daily.df, aes(x=as.numeric(Age)-0.2), alpha = 1, size = 1, width = 0.25, outlier.shape=NA) +
-  geom_jitter(data=stage3, aes(x=as.numeric(Age)+0.2, colour=stagecolors[1]), size=3,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
-  geom_jitter(data=stage4, aes(x=as.numeric(Age)+0.2, colour=stagecolors[2]), size=3, position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
-  geom_jitter(data=stage5, aes(x=as.numeric(Age)+0.2, colour=stagecolors[3]), size=3, position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
-  geom_jitter(data=stage6, aes(x=as.numeric(Age)+0.2, colour=stagecolors[4]), size=3,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
-    geom_jitter(data=stage7, aes(x=as.numeric(Age)+0.2, colour=stagecolors[5]), size=3,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
-    geom_jitter(data=stage8, aes(x=as.numeric(Age)+0.2, colour=stagecolors[6]), size=3,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+  geom_jitter(data=stage3, aes(x=as.numeric(Age)+0.2, fill=stagecolors[1]), colour="black", pch=21, size=4,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+  geom_jitter(data=stage4, aes(x=as.numeric(Age)+0.2, fill=stagecolors[3]), colour="black", pch=21, size=4, position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+  geom_jitter(data=stage5, aes(x=as.numeric(Age)+0.2, fill=stagecolors[5]), colour="black", pch=21, size=4, position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+  geom_jitter(data=stage6, aes(x=as.numeric(Age)+0.2, fill=stagecolors[7]), colour="black", pch=21, size=4,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+    geom_jitter(data=stage7, aes(x=as.numeric(Age)+0.2, fill=stagecolors[9]), colour="black", pch=21, size=4,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
+    geom_jitter(data=stage8, aes(x=as.numeric(Age)+0.2, fill=stagecolors[11]), colour="black", pch=21, size=4,  position=position_jitterdodge(jitter.width=.3, jitter.height=0, dodge.width=0.75, seed=NA)) +
   theme_cowplot(font_size = 18, line_size = 1) +
-  scale_color_identity(name="Stage", 
-                       breaks=c(stagecolors[1], stagecolors[2], stagecolors[3], stagecolors[4], stagecolors[5], stagecolors[6]), 
+  scale_fill_identity(name="Stage", 
+                       breaks=c(stagecolors[1], stagecolors[3], stagecolors[5], stagecolors[7], stagecolors[9], stagecolors[11]), 
                        labels=c(3, 4, 5, 6, 7, 8), 
                        guide="legend") +
   scale_x_continuous(limits=c(2.5, 6.5), 
@@ -374,119 +347,121 @@ plot.daily <- ggplot(Daily.df, aes(x=Age, y=CorrectedAvg, group=as.factor(as.cha
                      labels=c("3", "4", "5", "6")) +
   scale_y_continuous(limits=c(0,40), 
                      breaks = c(0, 10, 20, 30, 40))+
-  labs(y = "VOR amplitude (°)\n") +
+  labs(x = "\nDevelopmental age (days)", 
+       y = "VOR amplitude (°)\n") +
   theme(axis.text.y=element_text(size=18, colour= "black")) +
   theme(axis.text.x=element_text(size=18, colour= "black")) +
-  theme(axis.title.x=element_blank()) +
+  theme(axis.title.x=element_text(size=18, colour = "black")) +
   theme(axis.title.y=element_text(size=18, colour = "black")) +
   theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
   theme(legend.background = element_rect(fill="white",
                                   size=0.75, linetype="solid", 
                                   colour ="black")) + 
-  annotate("text",x=3,y=15,label="a", size=10)+
-  annotate("text",x=4,y=35,label="b", size=10)+
-  annotate("text",x=5,y=33,label="b", size=10)+
-  annotate("text",x=6,y=40,label="b", size=10)
+  annotate("text",x=3,y=15,label="a", size=8)+
+  annotate("text",x=4,y=35,label="b", size=8)+
+  annotate("text",x=5,y=33,label="b", size=8)+
+  annotate("text",x=6,y=40,label="b", size=8)
 
 plot.daily
 ```
 
-Plot part B of figure: 
+```{r}
+ggsave("~/Desktop/Figure3.pdf", 
+ plot = plot.daily, # or give ggplot object name as in myPlot,
+ width = 18, height = 15, 
+ units = "cm", # other options c("in", "cm", "mm"), 
+ dpi = 300)
+dev.off()
+```
+
+
+## Fig4
+
+```{r}
+plot.sibs<- ggplot(SubsetSibshipsSonia.df, aes(x=Age, y=CorrectedAvg, fill=Clutch, shape=Clutch, group=Clutch)) +
+  geom_point(data=c101, aes(x=as.numeric(Age), fill=clutchcolors[1]), color="black", pch=21, size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=2, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c102, aes(x=as.numeric(Age), fill=clutchcolors[2]), color="black", pch=22, size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=2, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c104, aes(x=as.numeric(Age), fill=clutchcolors[3]), color="black", pch=23, size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=2, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c105, aes(x=as.numeric(Age), fill=clutchcolors[4]), color="black", pch=24, size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=2, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c106, aes(x=as.numeric(Age), fill=clutchcolors[5]), color="black", pch=25, size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=2, dodge.width=0.75, seed=NA)) +
+  theme_cowplot(font_size = 18, line_size = 1) +
+  labs(x = "\nDevelopmental age (days)", 
+       y = "VOR amplitude (°)\n") +
+  scale_fill_manual(name="Clutch", 
+                    labels=c("I", "II", "III", "IV", "V"), 
+                    values=c(clutchcolors[1], clutchcolors[2], clutchcolors[3], clutchcolors[4], clutchcolors[5]), 
+                    guide="legend") +
+  scale_shape_manual(name="Clutch", 
+                     labels=c("I", "II", "III", "IV", "V"), 
+                     values=c(21, 22, 23, 24, 25),
+                     guide="legend") +
+  theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
+  theme(legend.background = element_rect(fill="white",
+                                         size=0.75, linetype="solid", 
+                                         colour ="black")) + 
+  scale_x_continuous(limits=c(3.6, 5.9), 
+                     breaks = c(3.75, 4, 4.25, 4.5, 4.75, 5.75), 
+                     labels=c("3.75", "4", "4.25", "4.5", "4.75", "5.75")) +
+  scale_y_continuous(limits=c(0,50), 
+                     breaks = c(0, 10, 20, 30, 40, 50))+
+  theme(axis.text.y=element_text(size=18, colour= "black")) +
+  theme(axis.text.x=element_text(size=18, colour= "black")) +
+  theme(axis.title.x=element_text(size=18, colour = "black")) +
+  theme(axis.title.y=element_text(size=18, colour = "black")) +
+  annotate("text",x=3.75,y=7,label="a", size=8)+
+  annotate("text",x=4,y=13,label="a", size=8)+
+  annotate("text",x=4.25,y=30,label="b", size=8)+
+  annotate("text",x=4.5,y=45,label="c", size=8)+
+  annotate("text",x=4.75,y=48,label="d", size=8)+
+  annotate("text",x=5.75,y=48,label="d", size=8)
+
+plot.sibs
+```
+
 
 ```{r}
 plot.sibs<- ggplot(SubsetSibshipsSonia.df, aes(x=Age, y=CorrectedAvg, colour=Clutch)) +
-  geom_point(data=c101, aes(x=as.numeric(Age), colour=clutchcolors[1]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
-  geom_point(data=c102, aes(x=as.numeric(Age), colour=clutchcolors[2]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
-  geom_point(data=c104, aes(x=as.numeric(Age), colour=clutchcolors[3]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
-  geom_point(data=c105, aes(x=as.numeric(Age), colour=clutchcolors[4]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
-  geom_point(data=c106, aes(x=as.numeric(Age), colour=clutchcolors[5]), size=3, position=position_jitterdodge(jitter.width=.1, jitter.height=.1, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c101, aes(x=as.numeric(Age), colour=clutchcolors[1]), size=3, position=position_jitterdodge(jitter.width=0.07, jitter.height=0.5, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c102, aes(x=as.numeric(Age), colour=clutchcolors[2]), size=3, position=position_jitterdodge(jitter.width=0.07, jitter.height=0.5, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c104, aes(x=as.numeric(Age), colour=clutchcolors[3]), size=3, position=position_jitterdodge(jitter.width=.07, jitter.height=0.5, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c105, aes(x=as.numeric(Age), colour=clutchcolors[4]), size=3, position=position_jitterdodge(jitter.width=.07, jitter.height=0.5, dodge.width=0.75, seed=NA)) +
+  geom_point(data=c106, aes(x=as.numeric(Age), colour=clutchcolors[5]), size=3, position=position_jitterdodge(jitter.width=.07, jitter.height=0.5, dodge.width=0.75, seed=NA)) +
   theme_cowplot(font_size = 18, line_size = 1) +
   labs(x = "\nDevelopmental age (days)", 
        y = "VOR amplitude (°)\n") +
   scale_color_identity(name="Clutch", 
                        breaks=c(clutchcolors[1], clutchcolors[2], clutchcolors[3], clutchcolors[4], clutchcolors[5]), 
-                       labels=c(101, 102, 104, 105, 106), 
+                       labels=c("I", "II", "III", "IV", "V"), 
                        guide="legend") +
   theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
   theme(legend.background = element_rect(fill="white",
-                                         size=0.5, linetype="solid", 
+                                         size=0.75, linetype="solid", 
                                          colour ="black")) + 
-  scale_x_continuous(limits=c(3.75, 5.75), 
-                     breaks = c(4, 4.5, 5, 5.5), 
-                     labels=c("4", "4.5", "5", "5.5")) +
+  scale_x_continuous(limits=c(3.6, 5.9), 
+                     breaks = c(3.75, 4, 4.25, 4.5, 4.75, 5.75), 
+                     labels=c("3.75", "4", "4.25", "4.5", "4.75", "5.75")) +
   scale_y_continuous(limits=c(0,50), 
                      breaks = c(0, 10, 20, 30, 40, 50))+
   theme(axis.text.y=element_text(size=18, colour= "black")) +
   theme(axis.text.x=element_text(size=18, colour= "black")) +
   theme(axis.title.x=element_text(size=18, colour = "black")) +
   theme(axis.title.y=element_text(size=18, colour = "black")) +
-  annotate("text",x=3.75,y=7,label="a", size=10)+
-  annotate("text",x=4,y=13,label="a", size=10)+
-  annotate("text",x=4.25,y=30,label="b", size=10)+
-  annotate("text",x=4.5,y=45,label="c", size=10)+
-  annotate("text",x=4.75,y=15,label="d", size=10)+
-  annotate("text",x=5.75,y=7,label="d", size=10)
+  annotate("text",x=3.75,y=7,label="a", size=8)+
+  annotate("text",x=4,y=13,label="a", size=8)+
+  annotate("text",x=4.25,y=30,label="b", size=8)+
+  annotate("text",x=4.5,y=45,label="c", size=8)+
+  annotate("text",x=4.75,y=48,label="d", size=8)+
+  annotate("text",x=5.6,y=48,label="d", size=8)
 
 plot.sibs
-```
-
-```{r}
-plot.sibs<- ggplot(SubsetSibshipsSonia.df, aes(x=Age, y=CorrectedAvg, colour=Clutch)) +
-  geom_point(data=c101, colour="#FC0008", size=3) +
-  geom_point(data=c102, colour="#21FF05", size=3) +
-  geom_point(data=c104, colour="#0000FF", size=3) +
-  geom_point(data=c105, colour="#FC8008", size=3) +
-  geom_point(data=c106, colour="#800080", size=3) +
-  theme_cowplot(font_size = 18, line_size = 1) +
-  labs(x = "\nDevelopmental age (days)", 
-       y = "VOR amplitude (°)\n") +
-  theme(legend.justification = c(0,1), legend.position = c(0.05,1)) +
-  theme(legend.background = element_rect(fill="white",
-                                         size=0.5, linetype="solid", 
-                                         colour ="black")) + 
-  scale_color_identity(name="Clutch", 
-                       breaks=c("#FC0008", "#21FF05", "#0000FF", "#FC8008", "#c800080"), 
-                       labels=c(101, 102, 104, 105, 106), 
-                       guide="legend") +
-  scale_x_continuous(limits=c(3.75, 5.75), 
-                     breaks = c(4, 4.5, 5, 5.5), 
-                     labels=c("4", "4.5", "5", "5.5")) +
-  scale_y_continuous(limits=c(0,50), 
-                     breaks = c(0, 10, 20, 30, 40, 50))+
-  theme(axis.text.y=element_text(size=18, colour= "black")) +
-  theme(axis.text.x=element_text(size=18, colour= "black")) +
-  theme(axis.title.x=element_text(size=18, colour = "black")) +
-  theme(axis.title.y=element_text(size=18, colour = "black")) +
-  annotate("text",x=3.75,y=7,label="a", size=10)+
-  annotate("text",x=4,y=13,label="a", size=10)+
-  annotate("text",x=4.25,y=30,label="b", size=10)+
-  annotate("text",x=4.5,y=45,label="c", size=10)+
-  annotate("text",x=4.75,y=15,label="d", size=10)+
-  annotate("text",x=5.75,y=7,label="d", size=10)
-
-plot.sibs
-```
-
-It's tempting to just create graphics to the on-screen device and just use "Save As..." from the menu, but this doesn't allow you to explicitly set the options for the device and/or choose the file format. Although this default figure might look ~ okay ~ in the "Plots" section of RStudio, it does not export as a high-resolution figure. The default resolution of R and RStudio images are exported at 72 ppi - insufficient for publication. Most journals require 300 ppi images in TIFF, EPS, PNG or PDF format. Also, if you resize the graphics window after you create the graph, you can get some unexpected results (like strange ratios/circles that look like ovals). Avoid using dev.copy for the same reason, despite its convenience. 
-
-Best practice is to create a script file that begins with a call to the device driver (usually pdf or png), runs the graphics commands, and then finishes with a call to dev.off (). This way, you'll get better-looking results AND you'll be able to recreate the graphic file months later when you've definitely forgotten how you did it manually. 
-To export a high-resolution figure, we first assign the plot and then use another package called gridExtra. 
-
-```{r}
-# Load required package
-require(gridExtra)
-
-Figure4 <- plot_grid(plot.daily, plot.sibs, labels = "AUTO", ncol = 1, align = 'v')
-
-Figure4
 ```
 
 This figure looks pretty squished in the html preview, but when I save this figure to my desktop, all the things are proportional and pretty!
 
 ```{r}
 ggsave("~/Desktop/Figure4.pdf", 
- plot = Figure4, # or give ggplot object name as in myPlot,
- width = 18, height = 21, 
+ plot = plot.sibs, # or give ggplot object name as in myPlot,
+ width = 18, height = 15, 
  units = "cm", # other options c("in", "cm", "mm"), 
  dpi = 300)
 dev.off()
@@ -583,6 +558,17 @@ correctedShakeRoll <- subset(ShakeRoll.df, ShakeRoll.df$CorrectedAvg==0)
 ```
 
 ##Fig 5A
+```{r}
+shakeroll_stuff<-
+  ShakeRoll.df %>%
+  group_by(ConsensusStages, HorNH) %>%
+  summarize(count = n(),
+            mean = mean(CorrectedAvg),
+            SD = sd(CorrectedAvg), 
+            SE = sd(CorrectedAvg)/sqrt(n())
+            )
+kable(shakeroll_stuff,title="Mean & SD & SE",digits=4)
+```
 
 ```{r}
 plot.VOR<-ggplot(ShakeRoll.df, aes(x=as.factor(ConsensusStages), y=CorrectedAvg, fill = HorNH)) + 
@@ -600,6 +586,14 @@ plot.VOR<-ggplot(ShakeRoll.df, aes(x=as.factor(ConsensusStages), y=CorrectedAvg,
   annotate("text",x=4,y=25,label="a", size=6)+
   annotate("text",x=5,y=18,label="b", size=6)+
   annotate("text",x=6,y=17,label="c", size=6)+
+  annotate("text",x=1.1,y=2,label="N=4", size=4, color="red")+
+  annotate("text",x=2.2,y=2,label="8", size=4, color="red")+
+  annotate("text",x=3.2,y=2,label="6", size=4, color="red")+
+  annotate("text",x=4.2,y=15,label="4", size=4, color="red")+
+  annotate("text",x=4.8,y=30.5,label="45", size=4, color="red")+
+  annotate("text",x=5.2,y=31.5,label="18", size=4, color="red")+
+  annotate("text",x=5.8,y=39,label="39", size=4, color="red")+
+  annotate("text",x=6.2,y=41,label="45", size=4, color="red")+
   theme(legend.background = element_rect(fill="white",
                                          size=0.4, linetype="solid", 
                                          colour ="black"))+
@@ -742,12 +736,32 @@ Anova(lmm1)
 Of the 23 clutches with hatching, we compared mean VOR for each clutch (3-6 individuals per clutch, mean 4.666667±SE 0.2288689) with proportion hatched. Clutch hatching rate increases with mean VOR (Figure 6, linear regression one-way ANOVA, F1,21=8.7829, P=0.0074). 
 
 ```{r}
+ClutchesWHatching$ConsensusModeStage
+ClutchesWHatching$ConsensusMeanStage
+ClutchesWHatching$ConsensusStage
+s5<-subset(ClutchesWHatching, ConsensusModeStage==5)
+s6<-subset(ClutchesWHatching, ConsensusModeStage==6)
+s7<-subset(ClutchesWHatching, ConsensusModeStage==7)
+s8<-subset(ClutchesWHatching, ConsensusModeStage==8)
+```
+
+```{r}
+  
 plot.PropH<-ggplot(ClutchesWHatching, aes(x=CorrectedAmpClutchMeans, y=PropH)) + 
-  geom_point(size=3) +
+  geom_point(data=s6, aes(x=CorrectedAmpClutchMeans, fill=stagecolors[7]), colour="black", pch=21, size=4) +
+  geom_point(data=s7, aes(fill=stagecolors[9]), colour="black", pch=21, size=4) +
   geom_smooth(method = "lm", se=TRUE, color="Black", linetype="dashed")+
   labs(y = "Proportion of clutch hatched\n", 
        x = "\n Clutch mean of VOR amplitude (°)\n")+
   theme_cowplot(font_size = 14, line_size = 1)+
+  scale_fill_identity(name="Modal Stage", 
+                       breaks=c(stagecolors[7], stagecolors[9]),
+                       labels=c(6, 7), 
+                       guide="legend") +
+  theme(legend.justification = c(1,0), legend.position = c(0.95,0.05)) +
+  theme(legend.background = element_rect(fill="white",
+                                  size=0.75, linetype="solid", 
+                                  colour ="black")) + 
   theme(axis.text.y=element_text(size=14, colour= "black")) +
   theme(axis.text.x=element_text(size=14, colour= "black")) +
   theme(axis.title.x=element_text(size=14, colour = "black")) +
@@ -1108,6 +1122,18 @@ propH_fig6_df<- data.frame (stage, N, propH)
 ## Fig 6
 
 ```{r}
+jiggle_stuff<-
+  tactile %>%
+  group_by(Developmental.Stage, Response) %>%
+  summarize(count = n(),
+            mean = mean(CorrectedAvg),
+            SD = sd(CorrectedAvg), 
+            SE = sd(CorrectedAvg)/sqrt(n())
+            )
+kable(jiggle_stuff,title="Mean & SD & SE",digits=4)
+```
+
+```{r}
 plot.VORfig6<-ggplot(tactile, aes(x=as.factor(Developmental.Stage), y=CorrectedAvg, fill = as.factor(Response))) + 
   geom_boxplot(data=tactile, size=1, color="black") +
   labs(y = "VOR amplitude (°)\n", 
@@ -1123,6 +1149,16 @@ plot.VORfig6<-ggplot(tactile, aes(x=as.factor(Developmental.Stage), y=CorrectedA
   annotate("text",x=4,y=30,label="b", size=6)+
   annotate("text",x=5,y=35,label="c", size=6)+
   annotate("text",x=6,y=40,label="c", size=6)+
+  annotate("text",x=1,y=2,label="4", size=4, color="red")+
+  annotate("text",x=1.8,y=2,label="24", size=4, color="red")+
+  annotate("text",x=2.2,y=2,label="5", size=4, color="red")+
+  annotate("text",x=2.8,y=5,label="10", size=4, color="red")+
+  annotate("text",x=3.2,y=10,label="9", size=4, color="red")+
+  annotate("text",x=3.8,y=11,label="6", size=4, color="red")+
+  annotate("text",x=4.2,y=21.5,label="18", size=4, color="red")+
+  annotate("text",x=4.8,y=19,label="7", size=4, color="red")+
+  annotate("text",x=5.2,y=28.5,label="26", size=4, color="red")+
+  annotate("text",x=6,y=31.5,label="3", size=4, color="red")+
   theme(legend.background = element_rect(fill="white",
                                          size=0.4, linetype="solid", 
                                          colour ="black"))+
@@ -1185,13 +1221,44 @@ dev.off()
 
 ##Fig 7
 
+```{r}
+NH_s2<-subset(tactile, tactile$Response==0 & Developmental.Stage==2)
+H_s2<-subset(tactile, tactile$Response==1 & Developmental.Stage==2)
+NH_s3<-subset(tactile, tactile$Response==0 & Developmental.Stage==3)
+H_s3<-subset(tactile, tactile$Response==1 & Developmental.Stage==3)
+NH_s4<-subset(tactile, tactile$Response==0 & Developmental.Stage==4)
+H_s4<-subset(tactile, tactile$Response==1 & Developmental.Stage==4)
+NH_s5<-subset(tactile, tactile$Response==0 & Developmental.Stage==5)
+H_s5<-subset(tactile, tactile$Response==1 & Developmental.Stage==5)
+NH_s6<-subset(tactile, tactile$Response==0 & Developmental.Stage==6)
+H_s6<-subset(tactile, tactile$Response==1 & Developmental.Stage==6)
+NH_s7<-subset(tactile, tactile$Response==0 & Developmental.Stage==7)
+H_s7<-subset(tactile, tactile$Response==1 & Developmental.Stage==7)
+```
+
 Moreover, developmental stage and VOR amplitude were significant predictors of hatching (Fig. 8a, binomial GLMM for Response ~ Stage + VOR with Clutch as a random effect). 
 
 ```{r}
-plot.stageGLM<-ggplot(tactile, aes(x=as.numeric(as.character(Developmental.Stage)), y=as.numeric(as.character((Response)), shape=as.factor(Response)))) +
+plot.stageGLM<-ggplot(tactile, aes(x=as.numeric(as.character(Developmental.Stage)), y=as.numeric(as.character((Response))))) +
   stat_smooth(method = "glm", method.args=list(family="binomial"), color="black", linetype="dashed") +
-  geom_point(data=hat, shape=21, size=3, position=position_jitter(height=0.06, width=0.2)) +
-  geom_point(data=nohat, shape=16, size=3, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s2, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[2]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s3, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[1]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s4, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[3]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s5, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[5]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s6, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[7]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s3, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[1]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s4, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[3]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s5, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[5]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s6, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[7]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s7, aes(x=as.numeric(as.character(Developmental.Stage)), fill=stagecolors[9]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+    scale_fill_identity(name="Stage", 
+                       breaks=c(stagecolors[1], stagecolors[3], stagecolors[5], stagecolors[7], stagecolors[9]),
+                       labels=c(3, 4, 5, 6, 7), 
+                       guide="legend") +
+  theme(legend.justification = c(1,0), legend.position = c(0.95,0.05)) +
+  theme(legend.background = element_rect(fill="white",
+                                  size=0.75, linetype="solid", 
+                                  colour ="black")) + 
   scale_y_continuous(breaks = c(0, 1))+
   theme(axis.text.y=element_text(size=14, colour= "black")) +
   theme(axis.text.x=element_text(size=14, colour= "black")) +
@@ -1207,8 +1274,24 @@ plot.stageGLM
 ```{r}
 plot.VORGLM<-ggplot(tactile, aes(x=CorrectedAvg, y=as.numeric(as.character((Response)), shape=as.factor(Response)))) +
   stat_smooth(method = "glm", method.args=list(family="binomial"), color="black", linetype="dashed") +
-  geom_point(data=hat, shape=21, size=3, position=position_jitter(height=0.06, width=0.2)) +
-  geom_point(data=nohat, shape=16, size=3, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s2, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[2]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s3, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[1]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s4, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[3]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s5, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[5]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=NH_s6, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[7]), colour="black", pch=16, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s3, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[1]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s4, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[3]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s5, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[5]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s6, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[7]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+  geom_point(data=H_s7, aes(x=as.numeric(as.character(CorrectedAvg)), fill=stagecolors[9]), colour="black", pch=21, size=4, position=position_jitter(height=0.06, width=0.2)) +
+    scale_fill_identity(name="Stage", 
+                       breaks=c(stagecolors[1], stagecolors[3], stagecolors[5], stagecolors[7], stagecolors[9]),
+                       labels=c(3, 4, 5, 6, 7), 
+                       guide="legend") +
+  theme(legend.justification = c(1,0), legend.position = c(40,0.1)) +
+  theme(legend.background = element_rect(fill="white",
+                                  size=0.75, linetype="solid", 
+                                  colour ="black")) + 
   scale_y_continuous(breaks = c(0, 1))+
   theme(axis.text.y=element_text(size=14, colour= "black")) +
   theme(axis.text.x=element_text(size=14, colour= "black")) +
@@ -1232,15 +1315,6 @@ Figure7
 ```
 
 This figure looks pretty squished in the html preview, but when I save this figure to my desktop, all the things are proportional and pretty!
-
-```{r}
-png("~/Desktop/Figure7.png", width = 18, height = 21, units = 'cm', res = 300)
-grid.arrange (Figure7) # Make plot
-
-#don't forget to embed fonts.
-#embed_fonts("plotname.pdf", outfile = "plotname_embed.pdf")
-dev.off()
-```
 
 ```{r}
 ggsave("~/Desktop/Figure7.pdf", 
@@ -1481,11 +1555,11 @@ range(tactile$CorrectedAvg, na.rm=T)
 ```{r}
 Figure8 <- ggplot(tactile, aes(x=CorrectedAvg, y=as.numeric(as.character(Latency.to.Hatch.in.Minutes)))) +
   geom_smooth(method = "lm", se=TRUE, color="Black", linetype="dashed") +
-  geom_point(data=st3.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[1]), size=3) +
-  geom_point(data=st4.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[2]), size=3) +
-  geom_point(data=st5.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[3]), size=3) +
-  geom_point(data=st6.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[4]), size=3) +
-  geom_point(data=st7.H, position=position_jitter(height=0.4, width=0.4), aes(colour = stagecolors[5]), size=3) +
+  geom_point(data=st3.H, position=position_jitter(height=0.4, width=0.4), aes(fill = stagecolors[1]), colour="black", pch=21, size=4) +
+  geom_point(data=st4.H, position=position_jitter(height=0.4, width=0.4), aes(fill = stagecolors[3]), colour="black", pch=21, size=4) +
+  geom_point(data=st5.H, position=position_jitter(height=0.4, width=0.4), aes(fill = stagecolors[5]), colour="black", pch=21, size=4) +
+  geom_point(data=st6.H, position=position_jitter(height=0.4, width=0.4), aes(fill = stagecolors[7]),colour="black", pch=21, size=4) +
+  geom_point(data=st7.H, position=position_jitter(height=0.4, width=0.4), aes(fill = stagecolors[9]), colour="black", pch=21, size=4) +
   theme_cowplot(font_size = 14, line_size = 1) +
   labs(x = "\nVOR amplitude (°)", 
        y = "Latency to hatch (min)\n") +
@@ -1493,8 +1567,8 @@ Figure8 <- ggplot(tactile, aes(x=CorrectedAvg, y=as.numeric(as.character(Latency
   theme(legend.background = element_rect(fill="white",
                                          size=0.5, linetype="solid", 
                                          colour ="black")) +
-  scale_color_identity(name="Stage", 
-                       breaks=c(stagecolors[1], stagecolors[2], stagecolors[3], stagecolors[4], stagecolors[5]), 
+  scale_fill_identity(name="Stage", 
+                       breaks=c(stagecolors[1], stagecolors[3], stagecolors[5], stagecolors[7], stagecolors[9]), 
                        labels=c(3, 4, 5, 6, 7), 
                        guide="legend") +
   theme(axis.text.y=element_text(size=14, colour= "black")) +
@@ -1506,13 +1580,7 @@ Figure8
 ```
 
 ```{r}
-png("~/Desktop/VOR_ms_figures/Figure8.png", width = 18, height = 15, units = 'cm', res = 300)
-grid.arrange (Figure8) # Make plot
-dev.off()
-```
-
-```{r}
-ggsave("~/Desktop/VOR_ms_figures/Figure8.pdf", 
+ggsave("~/Desktop/Figure8.pdf", 
  plot = Figure8, # or give ggplot object name as in myPlot,
  width = 18, height = 15, 
  units = "cm", # other options c("in", "cm", "mm"), 
