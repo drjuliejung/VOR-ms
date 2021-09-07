@@ -7,8 +7,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-NOTE TO SELF: THIS IS THE LATEST/BEST VERSION OF VOR ANALYSIS. 
-
 ```{r setup, include=FALSE}
 rm(list=ls()) #clear environment
 setwd('/Users/juliejung/Documents/GitHub/VOR-ms') 
@@ -17,37 +15,15 @@ setwd('/Users/juliejung/Documents/GitHub/VOR-ms')
 ## install and load packages
 
 ```{r}
-library(xlsx);library(clinfun);library(car)
-library(MASS);library(multcomp);library(pscl);library(psych);library(lme4)
-library("stargazer");library("knitr");library("dplyr")
+library(xlsx);library(clinfun);library(car); library(MASS);library(multcomp);library(pscl);library(psych);library(lme4); library("stargazer");library("knitr");library("dplyr")
 library(sciplot);library(ggplot2);library(ggrepel); library(extrafont); library(ggthemes);library(reshape);library(grid);
 library(scales);library(RColorBrewer);library(gridExtra);library(cowplot)
 ```
 
-Colors
+Set colors
 ```{r}
-#stagecolors <- c("black", "brown2", "orange1", "sienna4", "limegreen", "forestgreen")
-
 stagecolors <- brewer.pal("BrBG", n=11)
-#2     none
-#3    1      medium
-#4     1     lots
-#5     1     lots
-#6    lots      lots
-#7    lots      medium     
-#8    lots     none
 clutchcolors<- c("red", "green", "blue", "orange", "purple")
-#RED = c101
-#GREEN= c102
-#blue=c104
-#orange=c105
-#PURPLE = c106
-
-#clutchcolors<- c("cyan1",  "mediumturquoise", "blue2", "navyblue")
-
-#library(RColorBrewer)
-#stagecolors <- brewer.pal("Dark2", n=6)
-#clutchgrays<- brewer.pal("Greys", n=9)
 ```
 
 ## Daily developmental series
@@ -56,7 +32,9 @@ clutchcolors<- c("red", "green", "blue", "orange", "purple")
 Daily.df<-read.xlsx("Daily_20180701.xls", sheetName="Daily")
 #str(Daily.df) #note this includes the two 7d indivs
 ```
+
 Subset out the 2 individuals at 7 days
+
 ```{r}
 Daily.df <- subset(Daily.df, Daily.df$Age<7)
 str(Daily.df) # now only ages 3 - 6 days
@@ -91,7 +69,6 @@ mean(Daily.df$Age) #
 ```
 
 ```{r}
-
 # DATA COLORED BY STAGE
 stage2 <- subset(Daily.df, StageAge == 2)
 stage3 <- subset(Daily.df, StageAge == 3)
@@ -203,8 +180,6 @@ Anova(model7)
 anova(model6, model7)
 ```
 Note that because of the heirarchical nature of mixed effects models, it is impossible to accurately know the degrees of freedom. Thus, you simply do not report them.
-
-
 
 We can use LRT’s to calculate p-values for all of our predictors.
 
@@ -605,11 +580,11 @@ plot.VOR<-ggplot(ShakeRoll.df, aes(x=as.factor(ConsensusStages), y=CorrectedAvg,
 plot.VOR
 ```
 
-
-START In clutches with partial vibration cued hatching, hatched embryos did have greater VOR than unhatched (hypoxia hatched) siblings. 
+In clutches with partial vibration cued hatching, hatched embryos did have greater VOR than unhatched (hypoxia hatched) siblings. 
 
 partial = clutches where not all H or not all NH.
 For the subset of clutches where hatching occurred:
+
 ```{r}
 ClutchesWHatching <- subset(ShakeRoll.df, ShakeRoll.df$PropH>0 & ShakeRoll.df$PropH<1)
 str(ClutchesWHatching)
@@ -636,7 +611,6 @@ Considering all tested individuals, those that hatched in playback had a signifi
 
 incorporate clutch as a random effect
 ```{r}
-
 #library(lme4)
 
 lm0 = lm(CorrectedAvg ~ 1, data=ShakeRoll.df)
@@ -695,6 +669,7 @@ summary(lmm1)
 anova(lmm0,lmm1)
 Anova(lmm1)
 ```
+
 Were hypoxic hatched individual less developed than hatched to playback indivs?
 
 ```{r}
@@ -707,7 +682,6 @@ mean(PlaybackHatch$ConsensusStages)
 se(PlaybackHatch$ConsensusStages)
 ```
 Seems like yes - 
-
 
 Those that hatched only in response to hypoxia had significantly different VORs from those that hatched from playback and/or manually applied mechanosensory stimulation (Mixed Model, χ2=5.3014, P=0.02131). 
 
@@ -728,8 +702,6 @@ anova(lmm0,lmm1)
 Anova(lmm1)
 ```
 
-
-
 ##Fig 5B
 
 Of the 23 clutches with hatching, we compared mean VOR for each clutch (3-6 individuals per clutch, mean 4.666667±SE 0.2288689) with proportion hatched. Clutch hatching rate increases with mean VOR (Figure 6, linear regression one-way ANOVA, F1,21=8.7829, P=0.0074). 
@@ -745,7 +717,6 @@ s8<-subset(ClutchesWHatching, ConsensusModeStage==8)
 ```
 
 ```{r}
-  
 plot.PropH<-ggplot(ClutchesWHatching, aes(x=CorrectedAmpClutchMeans, y=PropH)) + 
   geom_point(data=s6, aes(x=CorrectedAmpClutchMeans, fill=stagecolors[7]), colour="black", pch=21, size=4) +
   geom_point(data=s7, aes(fill=stagecolors[9]), colour="black", pch=21, size=4) +
@@ -822,6 +793,7 @@ ggplot(ShakeRoll.df, aes(x=CorrectedAvg, y=PropH, shape=HorNH)) +
 ```
 
 SAME THING BUT this time only clutches with partial hatching
+
 ```{r}
 Hat<- subset(ClutchesWHatching, HorNH == "1")
 NoHat<- subset(ClutchesWHatching, HorNH == "0")
@@ -907,6 +879,7 @@ mod1 <- lmer(Average.Amplitude ~ Developmental.Stage + (1|Clutch), data=tactile)
 
 anova(mod0,mod1)
 ```
+
 VOR increased in magnitude across embryonic development with stage (Mixed Model, χ2=90.082, P=2.2e-16, Fig. 6A). 
 
 HERE WE LOOK FOR CLUTCH EFFECT OR CLUTCH x AGE INTERACTIONS:
@@ -972,7 +945,6 @@ We used generalized linear mixed models (GLMM, lme4 package; Bates and Maechler 
 
 Use a GLMM with binomial error distribution to test if the probability of hatching was predicted by developmental stage and VOR. The response variable was the response of each individual embryo (hatched or not) and we included clutch as a random intercept in the model to account for non-independence of clutches. For GLMMs we estimated p values of our predictors by using likelihood ratio tests of nested models (Zuur et al. 2009).
 
-
 incorporate clutch as a random effect
 
 Run the models w/ both predictors, i.e. stage & VOR together in the model
@@ -989,7 +961,6 @@ The Hessian is singular because the optimizer can't distinguish some of your par
 
 Hessian problem can be due to low representation 
 of certain values in the response, as well as to a small sample size.
-
 
 ```{r}
 glmm1 <- glmer(Response ~ Developmental.Stage + (1|Clutch), family=binomial(logit), data=tactile, glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000)))
@@ -1016,7 +987,6 @@ anova(glmm2,glmm3) # stage effect
 ```
 
 According to Justin (at STRI workshop): With mixed effects models, you can use the Anova() function from the car package to calculate summary statistics, but it is not advised by the R gurus. Instead, you should use Likelihood Ratio Tests (LRT) to compare nested models.
-
 
 To get total N of embryos tested, by stage
 ```{r}
@@ -1056,8 +1026,6 @@ clutch_tactile_table<-
             )
 kable(clutch_tactile_table,title="Mean & SD & SE",digits=3)
 ```
-
-
 
 PROP H of EACH STAGE: 
 ```{r}
@@ -1578,6 +1546,7 @@ ggplot(st7, aes(x=CorrectedAvg, y=as.numeric(as.character(Latency.to.Hatch.in.Mi
 ```
 
 ## Fig 8
+
 ```{r}
 8+6+15+11+10+12
 
@@ -1624,6 +1593,7 @@ dev.off()
 ```
 
 #Fig 9
+
 ```{r}
 Figure9 <- ggplot(tactile, aes(x=as.numeric(as.character(Developmental.Stage)), y=as.numeric(as.character(Latency.to.Hatch.in.Minutes))), group=as.numeric(as.character(Average.Amplitude))) +
   geom_point(aes(colour = as.numeric(as.character(Average.Amplitude))), size=3, position=position_jitter(height=0.4, width=0.4)) +
@@ -1726,7 +1696,7 @@ ggsave("~/Desktop/Figure10.pdf",
 dev.off()
 ```
 
-#START HERE
+### Some last min plots
 
 Make a variable with 3 categories: 
 1. NoHatch - no hatch (NH; black fill, pch = 19)
